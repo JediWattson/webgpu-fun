@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 
 import fragmentShader from './fragment.wgsl'
 import { makeBuffer } from "./buffer";
-import { mat4 } from "wgpu-matrix";
+import { mat4 } from "gl-matrix";
 
 export type CanvasRefType = HTMLCanvasElement | null;
 
@@ -17,10 +17,38 @@ function startPipeline(
     let frameId: number;
     let t: number = 0.0
     function frame() {     
+
+        t += 0.01
+        if (t > 2.0 * Math.PI) {
+            t -= 2.0 * Math.PI;
+        }
+
+        //make transforms
+        const projection = mat4.create();
+        // load perspective projection into the projection matrix,
+        // Field of view = 45 degrees (pi/4)
+        // Aspect ratio = 800/600
+        // near = 0.1, far = 10 
+        mat4.perspective(projection, Math.PI/4, 800/600, 0.1, 10);
+
+        const view = mat4.create();
+        //load lookat matrix into the view matrix,
+        //looking from [-2, 0, 2]
+        //looking at [0, 0, 0]
+        //up vector is [0, 0, 1]
+        mat4.lookAt(view, [-2, 0, 2], [0, 0, 0], [0, 0, 1]);
+
+        const model = mat4.create();
+        //Store, in the model matrix, the model matrix after rotating it by t radians around the z axis.
+        //(yeah, I know, kinda weird.)
+        mat4.rotate(model, model, t, [0,0,1]);
         
-        const projection = mat4.perspective(Math.PI / 4, 7/6, 0.1, 10);
-        const view = mat4.lookAt([-2, 0, 2], [0, 0, 0], [0, 0, 1]);
-        const model = mat4.rotate(mat4.create(), [0, 0, 1], t);
+
+        // TODO - I'd like to use this, but how?
+        // const projection = mat4.perspective(Math.PI / 4, 7/6, 0.1, 10);
+        // const view = mat4.lookAt([-2, 0, 2], [0, 0, 0], [0, 0, 1]);
+        // let model = mat4.create()
+        // mat4.rotate(model, [0, 0, 1], t, model);
         
         device.queue.writeBuffer(uniBuffer, 0, <ArrayBuffer>model);
         device.queue.writeBuffer(uniBuffer, 64, <ArrayBuffer>view);
@@ -51,7 +79,7 @@ function startPipeline(
         frameId = requestAnimationFrame(frame);
     }
     frameId = requestAnimationFrame(frame);
-    return () => {        
+    return () => {       
         if (!Number.isInteger(frameId)) return;
         cancelAnimationFrame(frameId);
     };
@@ -124,10 +152,6 @@ function useInit(canvasRef: { current: CanvasRefType }) {
                     code: fragmentShader
                 }),
                 targets: [{ format }]
-            },
-
-            primitive: {
-                topology: "triangle-list"
             }
         })
         cleanup.current = startPipeline(

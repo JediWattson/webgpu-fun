@@ -1,9 +1,9 @@
 export const makeBuffer = (device: GPUDevice) => {
     // each row contains 3 position values, 3 color values, 3 full points here
     const vertices = new Float32Array([
-          0.0,  0.5, 1.0, 0.0, 0.0,
-         -0.5, -0.5, 0.0, 1.0, 0.0, 
-          0.5, -0.5, 0.0, 0.0, 1.0  
+        0.0,  0.0,  0.5, 1.0, 0.0, 0.0,
+        0.0, -0.5, -0.5, 0.0, 1.0, 0.0, 
+        0.0,  0.5, -0.5, 0.0, 0.0, 1.0  
     ]);
 
     const descriptor: GPUBufferDescriptor = {
@@ -17,17 +17,17 @@ export const makeBuffer = (device: GPUDevice) => {
     buffer.unmap();
 
     const bufferLayout: GPUVertexBufferLayout = {
-        arrayStride: 20,
+        arrayStride: 24,
         attributes: [
             {
                 shaderLocation: 0,
-                format: "float32x2",
+                format: "float32x3",
                 offset: 0
             },
             {
                 shaderLocation: 1,
                 format: "float32x3",
-                offset: 8
+                offset: 12
             }
         ]
     }

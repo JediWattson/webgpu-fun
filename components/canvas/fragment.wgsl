@@ -1,9 +1,9 @@
-struct Transform {
+struct TransformData {
     model: mat4x4<f32>,
     view: mat4x4<f32>,
-    projection: mat4x4<f32>
-}
-@binding(0) @group(0) var<uniform> transformUBO: Transform;
+    projection: mat4x4<f32>,
+};
+@binding(0) @group(0) var<uniform> transformUBO: TransformData;
 
 struct Fragment {
     @builtin(position) Position : vec4<f32>,
@@ -11,12 +11,10 @@ struct Fragment {
 }
 
 @vertex
-fn vs_main(
-    @location(0) vertexPos: vec2<f32>, 
-    @location(1) vertexCol: vec3<f32>) -> Fragment {
+fn vs_main(@location(0) vertexPos: vec3<f32>, @location(1) vertexCol: vec3<f32>) -> Fragment {
 
     var output: Fragment;
-    output.Position = vec4<f32>(vertexPos, 0.0, 1.0);
+    output.Position = transformUBO.projection * transformUBO.view * transformUBO.model * vec4<f32>(vertexPos, 1.0);
     output.Color = vec4<f32>(vertexCol, 1.0);
 
     return output;
