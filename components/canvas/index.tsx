@@ -6,8 +6,16 @@ import useInit from "./lib";
 
 function Canvas() {
     const canvasRef = useRef<CanvasRefType>(null);    
-    useInit(canvasRef);        
-    return <canvas ref={canvasRef} />
+    const events = useInit(canvasRef);        
+
+    return (
+        <canvas 
+            ref={canvasRef}   
+            onClick={events.handleClick}  
+            onMouseMove={events.handleMouseMove}
+            onMouseOut={events.handleMouseOut}
+        />
+    )
 }
 
 export default Canvas;

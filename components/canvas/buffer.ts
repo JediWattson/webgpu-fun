@@ -1,10 +1,8 @@
-export const makeBuffer = (device: GPUDevice) => {
+import { mat4 } from "gl-matrix";
+
+const makeBuffer = (verticesCoords: number[]) => (device: GPUDevice, uniBuffer: GPUBuffer) => {
     // each row contains 3 position values, 3 color values, 3 full points here
-    const vertices = new Float32Array([
-        0.0,  0.0,  0.5, 1.0, 0.0, 0.0,
-        0.0, -0.5, -0.5, 0.0, 1.0, 0.0, 
-        0.0,  0.5, -0.5, 0.0, 0.0, 1.0  
-    ]);
+    const vertices = new Float32Array(verticesCoords);
 
     const descriptor: GPUBufferDescriptor = {
         size: vertices.byteLength,
@@ -32,8 +30,27 @@ export const makeBuffer = (device: GPUDevice) => {
         ]
     }
 
+    let t = 0.0
     return {
         buffer,
-        bufferLayout
+        bufferLayout,
+        update() {
+            t += 0.01
+            if (t > 2.0 * Math.PI) {
+                t -= 2.0 * Math.PI;
+            }
+
+            const model = mat4.create();
+            mat4.rotate(model, model, t, [0,0,1]);            
+            device.queue.writeBuffer(uniBuffer, 0, <ArrayBuffer>model);
+
+        }
     }
 };
+
+// each row contains 3 position values, 3 color values, 3 full points here
+export const makeTriangle = makeBuffer([
+    0.0,  0.0,  0.5, 1.0, 0.0, 0.0,
+    0.0, -0.5, -0.5, 0.0, 1.0, 0.0, 
+    0.0,  0.5, -0.5, 0.0, 0.0, 1.0  
+])
