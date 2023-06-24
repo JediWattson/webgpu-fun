@@ -7,8 +7,8 @@ export function Deg2Rad(theta: number) : number {
 export function makeCamera(device: GPUDevice, uniBuffer: GPUBuffer) {
     
     const projection = mat4.create();
-    mat4.perspective(projection, Math.PI/4, 800/600, 0.1, 10);
-    device.queue.writeBuffer(uniBuffer, 128, <ArrayBuffer>projection);
+    mat4.perspective(projection, Math.PI/4, 800/600, 0.1, 100);
+    device.queue.writeBuffer(uniBuffer, 64, <ArrayBuffer>projection);
 
     const eulers = [0, 0, 0];
 
@@ -29,16 +29,16 @@ export function makeCamera(device: GPUDevice, uniBuffer: GPUBuffer) {
         vec3.cross(up, right, forwards);
         vec3.add(target, position, forwards);
         mat4.lookAt(view, position, target, up);
-        device.queue.writeBuffer(uniBuffer, 64, <ArrayBuffer>view);
+        device.queue.writeBuffer(uniBuffer, 0, <ArrayBuffer>view);
     }
-
+    setMovement();
     return {
         reset() {
             eulers.forEach((e, i) => {eulers[i] = 0})
             setMovement();
         },
         update({ movementX, movementY }: { movementX: number, movementY: number }) {
-            eulers[1] = Math.min(89, Math.max(-89, movementY))            
+            eulers[1] = Math.min(89, Math.max(-89, eulers[1] + movementY / 5))            
             eulers[2] -= movementX / 5;
             eulers[2] %= 360;
 

@@ -1,6 +1,6 @@
-import { mat4 } from "gl-matrix";
+import { mat4, vec3 } from "gl-matrix";
 
-const makeBuffer = (verticesCoords: number[]) => (device: GPUDevice, uniBuffer: GPUBuffer) => {
+const makeBuffer = (verticesCoords: number[]) => (device: GPUDevice, objBuffer: GPUBuffer) => {
     // each row contains 3 position values, 3 color values, 3 full points here
     const vertices = new Float32Array(verticesCoords);
 
@@ -30,20 +30,31 @@ const makeBuffer = (verticesCoords: number[]) => (device: GPUDevice, uniBuffer: 
         ]
     }
 
+    const count = 10
+    const triangles: vec3[] = [];
+    for(let i = 0; i < count; i++) {
+        triangles.push([ 7 + (i - (count/2)), 1 + (i - (count/2))*.25, 0]);
+    }    
+    
     let t = 0.0
     return {
         buffer,
         bufferLayout,
+        getCount() {
+            return triangles.length;
+        },
         update() {
             t += 0.01
             if (t > 2.0 * Math.PI) {
                 t -= 2.0 * Math.PI;
             }
 
-            const model = mat4.create();
-            mat4.rotate(model, model, t, [0,0,1]);            
-            device.queue.writeBuffer(uniBuffer, 0, <ArrayBuffer>model);
-
+            triangles.forEach((triangle, i) => {
+                const model = mat4.create();
+                mat4.translate(model, model, triangle);
+                mat4.rotateZ(model, model, t);
+                device.queue.writeBuffer(objBuffer, i*64, <ArrayBuffer>model);    
+            })
         }
     }
 };

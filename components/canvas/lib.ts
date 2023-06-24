@@ -1,8 +1,6 @@
-import { EventHandler, MouseEvent, MouseEventHandler, SyntheticEvent, useEffect, useRef } from "react";
-
+import { MouseEvent, useEffect, useRef } from "react";
 import fragmentShader from './fragment.wgsl'
 import { makeTriangle } from "./buffer";
-import { mat4 } from "gl-matrix";
 import { makeCamera } from "./camera";
 
 export type CanvasRefType = HTMLCanvasElement | null;
@@ -12,16 +10,35 @@ function startPipeline(
     context: GPUCanvasContext,
     pipeline: GPURenderPipeline, 
     bindGroup: GPUBindGroup,
-    triangleMesh: { buffer: GPUBuffer, update: () => void }
+    triangleMesh: { buffer: GPUBuffer, update: () => void, getCount: () => number }
 ): () => void {
+
+    const depthStencilBuffer = device.createTexture({
+        size: {
+            width: 300,
+            height: 150,
+            depthOrArrayLayers: 1
+        },
+        format: "depth32float",
+        usage: GPUTextureUsage.RENDER_ATTACHMENT,
+    });
+    const depthStencilView = depthStencilBuffer.createView({ format: "depth32float" });
+    
+    const depthStencilAttachment: GPURenderPassDepthStencilAttachment = {
+        view: depthStencilView,
+        depthClearValue: 1.0,
+        depthLoadOp: "clear",
+        depthStoreOp: "store",
+    };
+
     let frameId: number;
-    let t: number = 0.0
     function frame() {
         triangleMesh.update();
         const commandEncoder = device.createCommandEncoder();
         const textureView = context.getCurrentTexture().createView();
 
         const renderPassDescriptor: GPURenderPassDescriptor = {
+            depthStencilAttachment,
             colorAttachments: [
                 {
                     view: textureView,
@@ -36,7 +53,7 @@ function startPipeline(
         passEncoder.setPipeline(pipeline);
         passEncoder.setVertexBuffer(0, triangleMesh.buffer);
         passEncoder.setBindGroup(0, bindGroup);
-        passEncoder.draw(3, 1, 0, 0);
+        passEncoder.draw(3, triangleMesh.getCount(), 0, 0);
         passEncoder.end();
     
         device.queue.submit([commandEncoder.finish()]);
@@ -68,19 +85,29 @@ function useInit(canvasRef: { current: CanvasRefType }) {
         });
 
         const uniBuffer = device.createBuffer({
-            size: 64 * 3,
+            size: 64 * 2,
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
         })
 
-        const triangleMesh = makeTriangle(device, uniBuffer);
+        const objBuffer = device.createBuffer({
+            size: 64 * 1024,
+            usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
+        })
+
         camera.current = makeCamera(device, uniBuffer);
+        const triangleMesh = makeTriangle(device, objBuffer);
 
         const bindGroupLayout = device.createBindGroupLayout({
             entries: [
                 {
                     binding: 0,
                     visibility: GPUShaderStage.VERTEX,
-                    buffer: {}
+                    buffer: { type: 'uniform' }
+                },
+                {
+                    binding: 1,
+                    visibility: GPUShaderStage.VERTEX,
+                    buffer: { type: "read-only-storage", hasDynamicOffset: false }
                 }
             ]
         })
@@ -93,6 +120,12 @@ function useInit(canvasRef: { current: CanvasRefType }) {
                     resource: {
                         buffer: uniBuffer
                     }
+                },
+                {
+                    binding: 1,
+                    resource: {
+                        buffer: objBuffer
+                    }
                 }
             ]
         })
@@ -103,6 +136,11 @@ function useInit(canvasRef: { current: CanvasRefType }) {
 
         const pipeline = device.createRenderPipeline({
             layout: pipelineLayout,
+            depthStencil: {
+                format: "depth32float",
+                depthWriteEnabled: true,
+                depthCompare: "less-equal"
+            },
             vertex: {
                 entryPoint: "vs_main",
                 module: device.createShaderModule({
@@ -116,7 +154,10 @@ function useInit(canvasRef: { current: CanvasRefType }) {
                     code: fragmentShader
                 }),
                 targets: [{ format }]
-            }
+            },
+            primitive : {
+                topology : "triangle-list"
+            },
         })
 
         cleanup.current = startPipeline(
