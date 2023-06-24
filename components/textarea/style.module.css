@@ -1,0 +1,8 @@
+.textareaContainer {
+  color: #cec6c6;
+  font-size: 22px;
+  box-shadow: 2px 2px 8px #d7d7fd;
+  border-radius: 8px;
+  background: transparent;
+  opacity: 0.7;
+}

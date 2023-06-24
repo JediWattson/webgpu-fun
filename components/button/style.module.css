@@ -1,0 +1,35 @@
+.buttonContainer {
+  cursor: pointer;
+  box-shadow: 2px 2px 8px #d7d7fd;
+  background: #0a1869;
+  opacity: 0.7;
+  color: white;
+  border-radius: 8px;
+  padding: 24px;
+  font-size: 22px;
+}
+
+.disabled {
+  background: #ff2e2e;
+  box-shadow: 2px 2px 8px #313c06;
+}
+
+.large {
+  height: 420px;
+}
+
+.small {
+  padding: 8px;
+  margin: 4px 0;
+}
+
+@media (max-width: 450px) {
+  .buttonContainer {
+    font-size: 18px;
+    padding: 8px;
+  }
+
+  .large {
+    height: unset;
+  }
+}

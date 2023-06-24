@@ -1,0 +1,34 @@
+.textBox {
+  overflow: scroll;
+  height: calc(100vh - 145px);
+  padding: 0 24px;
+}
+
+.message {
+  margin: 16px 0;
+}
+
+.h4 {
+  margin: 0 0 4px 0;
+  padding: 0px 4px;
+  font-size: 18px;
+  border: #9265e378 solid;
+  border-radius: 8px;
+  width: fit-content;
+}
+
+.gameSpeaker {
+  background: #5a390a !important;
+}
+
+.p {
+  margin: 0;
+  font-size: 22px;
+}
+
+.bubble {
+  width: fit-content;
+  background: #203e23;
+  border-radius: 8px;
+  padding: 8px;
+}
