@@ -1,18 +1,25 @@
 import { MouseEvent, useEffect, useRef } from "react";
-import fragmentShader from './fragment.wgsl'
-import { makeTriangle } from "./buffer";
-import { makeCamera } from "./camera";
+import { mat4 } from "gl-matrix";
+
+import { MeshBufferType, makeQuad, makeTriangle } from "../buffer";
+import initCamera, { CameraType } from "../camera";
+
+import triangleShader from '../shaders/triangle.wgsl';
+import makeMaterial from "../material";
 
 export type CanvasRefType = HTMLCanvasElement | null;
 
-function startPipeline(
-    device: GPUDevice, 
-    context: GPUCanvasContext,
-    pipeline: GPURenderPipeline, 
-    bindGroup: GPUBindGroup,
-    triangleMesh: { buffer: GPUBuffer, update: () => void, getCount: () => number }
-): () => void {
+function makeCamera(device: GPUDevice, cameraRef: { current?: CameraType }) {
+    const uniBuffer = device.createBuffer({
+        size: 64 * 2,
+        usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+    })
 
+    cameraRef.current = initCamera(device, uniBuffer);
+    return uniBuffer;
+}
+
+function makeDepthStencil(device: GPUDevice): GPURenderPassDepthStencilAttachment {
     const depthStencilBuffer = device.createTexture({
         size: {
             width: 300,
@@ -24,16 +31,43 @@ function startPipeline(
     });
     const depthStencilView = depthStencilBuffer.createView({ format: "depth32float" });
     
-    const depthStencilAttachment: GPURenderPassDepthStencilAttachment = {
+    return {
         view: depthStencilView,
         depthClearValue: 1.0,
         depthLoadOp: "clear",
         depthStoreOp: "store",
     };
+}
+
+let t = 0.0
+function updateTriangles(triangleMesh: MeshBufferType) {
+    t += 0.01
+    if (t > 2.0 * Math.PI) {
+        t -= 2.0 * Math.PI;
+    }
+
+    triangleMesh.update((o, i) => {
+        const model = mat4.create();
+        mat4.translate(model, model, o);
+        mat4.rotateZ(model, model, t);
+        return model;
+    });
+}
+
+function startPipeline(
+    device: GPUDevice, 
+    context: GPUCanvasContext,
+    pipeline: GPURenderPipeline, 
+    bindGroup: GPUBindGroup,
+    triangleMesh: MeshBufferType
+): () => void {
+    
+    const depthStencilAttachment = makeDepthStencil(device);
 
     let frameId: number;
     function frame() {
-        triangleMesh.update();
+        updateTriangles(triangleMesh);
+        
         const commandEncoder = device.createCommandEncoder();
         const textureView = context.getCurrentTexture().createView();
 
@@ -66,9 +100,9 @@ function startPipeline(
     };
 }
 
-function useInit(canvasRef: { current: CanvasRefType }) {
+function useRender(canvasRef: { current: CanvasRefType }) {
     const cleanup = useRef(() => {});
-    const camera = useRef({ reset: () => {}, update: (e: MouseEvent) => {} });
+    const camera = useRef<CameraType>();
     const init = async () => {        
         if (!canvasRef.current) return;        
         const canvas = canvasRef.current;
@@ -84,18 +118,18 @@ function useInit(canvasRef: { current: CanvasRefType }) {
           alphaMode: 'opaque',
         });
 
-        const uniBuffer = device.createBuffer({
-            size: 64 * 2,
-            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
-        })
+        const uniBuffer = makeCamera(device, camera)
 
         const objBuffer = device.createBuffer({
             size: 64 * 1024,
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
         })
 
-        camera.current = makeCamera(device, uniBuffer);
         const triangleMesh = makeTriangle(device, objBuffer);
+        triangleMesh.makeObjects(400);
+
+        const quadMesh = makeQuad(device, objBuffer, 400);
+    
 
         const bindGroupLayout = device.createBindGroupLayout({
             entries: [
@@ -108,10 +142,21 @@ function useInit(canvasRef: { current: CanvasRefType }) {
                     binding: 1,
                     visibility: GPUShaderStage.VERTEX,
                     buffer: { type: "read-only-storage", hasDynamicOffset: false }
+                },
+                {
+                    binding: 2,
+                    visibility: GPUShaderStage.FRAGMENT,
+                    texture: {}
+                },
+                {
+                    binding: 3,
+                    visibility: GPUShaderStage.FRAGMENT,
+                    sampler: {}
                 }
             ]
         })
 
+        const floorMaterial = await makeMaterial(device, 'floor.jpeg')
         const bindGroup = device.createBindGroup({
             layout: bindGroupLayout,
             entries: [
@@ -126,7 +171,15 @@ function useInit(canvasRef: { current: CanvasRefType }) {
                     resource: {
                         buffer: objBuffer
                     }
-                }
+                },
+                {
+                    binding: 2,
+                    resource: floorMaterial.view
+                },
+                {
+                    binding: 3,
+                    resource: floorMaterial.sampler
+                },
             ]
         })
 
@@ -144,14 +197,14 @@ function useInit(canvasRef: { current: CanvasRefType }) {
             vertex: {
                 entryPoint: "vs_main",
                 module: device.createShaderModule({
-                    code: fragmentShader
+                    code: triangleShader
                 }),
                 buffers: [triangleMesh.bufferLayout]
             },
             fragment: {
                 entryPoint: "fs_main",
                 module: device.createShaderModule({
-                    code: fragmentShader
+                    code: triangleShader
                 }),
                 targets: [{ format }]
             },
@@ -179,13 +232,13 @@ function useInit(canvasRef: { current: CanvasRefType }) {
             canvasRef.current?.requestPointerLock();
         },
         handleMouseOut(e: MouseEvent<HTMLCanvasElement>) {
-            camera.current.reset();
+            camera.current?.reset();
         },
         handleMouseMove(e: MouseEvent<HTMLCanvasElement>) {
             if(!document.pointerLockElement) return;
-            camera.current.update(e);
+            camera.current?.update(e);
         }
     }
 }
 
-export default useInit;
+export default useRender;

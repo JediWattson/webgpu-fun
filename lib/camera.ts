@@ -1,10 +1,13 @@
 import { mat4, vec3 } from "gl-matrix";
+import { MouseEvent } from "react";
+
+export type CameraType = { reset: () => void, update: (e: MouseEvent<HTMLCanvasElement>) => void }
 
 export function Deg2Rad(theta: number) : number {
     return theta * Math.PI / 180;
 }
 
-export function makeCamera(device: GPUDevice, uniBuffer: GPUBuffer) {
+export default function initCamera(device: GPUDevice, uniBuffer: GPUBuffer): CameraType {
     
     const projection = mat4.create();
     mat4.perspective(projection, Math.PI/4, 800/600, 0.1, 100);
@@ -38,7 +41,7 @@ export function makeCamera(device: GPUDevice, uniBuffer: GPUBuffer) {
             setMovement();
         },
         update({ movementX, movementY }: { movementX: number, movementY: number }) {
-            eulers[1] = Math.min(89, Math.max(-89, eulers[1] + movementY / 5))            
+            eulers[1] = Math.min(89, Math.max(-89, eulers[1] - movementY / 5))            
             eulers[2] -= movementX / 5;
             eulers[2] %= 360;
 

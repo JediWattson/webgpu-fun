@@ -1,12 +1,11 @@
 'use client'
 
 import { useRef } from "react";
-import type { CanvasRefType } from "./lib";
-import useInit from "./lib";
+import useRender, { CanvasRefType } from "@/lib/hooks/useRender";
 
 function Canvas() {
     const canvasRef = useRef<CanvasRefType>(null);    
-    const events = useInit(canvasRef);        
+    const events = useRender(canvasRef);        
 
     return (
         <canvas 
