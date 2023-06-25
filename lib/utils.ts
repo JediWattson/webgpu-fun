@@ -2,11 +2,9 @@ import { mat4 } from "gl-matrix";
 
 import { MaterialBufferType } from "./buffer";
 import initCamera, { CameraType } from "./camera";
-import { MaterialType } from "./material";
 
 export type CanvasRefType = HTMLCanvasElement | null;
-export type PipelineType = { 
-    // material: MaterialBufferType, 
+export type BindGroupType = { 
     bindGroup: GPUBindGroup, 
     bindGroupLayout: GPUBindGroupLayout 
 }
@@ -41,7 +39,7 @@ export function makeDepthStencil(device: GPUDevice): GPURenderPassDepthStencilAt
     };
 }
 
-export function makeBindGroup(device: GPUDevice, buffers: GPUBuffer[]): PipelineType {
+export function makeBindGroup(device: GPUDevice, buffers: GPUBuffer[]): BindGroupType {
     const bindGroupLayoutEntries: GPUBindGroupLayoutEntry[] = [
         {
             // perspective

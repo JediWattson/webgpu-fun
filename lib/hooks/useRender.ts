@@ -3,13 +3,12 @@ import { KeyboardEvent, MouseEvent, useEffect, useRef } from "react";
 import textureShader from '../shaders/texture.wgsl';
 import meshShader from '../shaders/mesh.wgsl';
 
-import { makeQuad, makeTriangle, meshBufferLayout } from "../buffer";
+import { MaterialBufferType, makeQuad, makeTriangle, meshBufferLayout } from "../buffer";
 import { CameraType } from "../camera";
 import makeMaterial from "../material";
 
 import { 
     CanvasRefType, 
-    PipelineType, 
     makeBindGroup, 
     makeCamera, 
     makeDepthStencil, 
@@ -22,17 +21,12 @@ function startPipeline(
     context: GPUCanvasContext,
     pipeline: GPURenderPipeline,
     objectBindGroup: GPUBindGroup,
-    pipelines: PipelineType[], 
+    materials: MaterialBufferType[], 
 ): () => void {
     const depthStencilAttachment = makeDepthStencil(device);
 
-    const triangleMaterial = pipelines[1].material;
-    updateTriangles(triangleMaterial);
-    updateFloor(pipelines[0].material);
     let frameId: number;
     function frame() {
-    
-        updateTriangles(triangleMaterial);
         const commandEncoder = device.createCommandEncoder();
         const textureView = context.getCurrentTexture().createView();
 
@@ -53,9 +47,9 @@ function startPipeline(
         passEncoder.setBindGroup(0, objectBindGroup);
 
         let objectCount = 0
-        pipelines.forEach(({ bindGroup, material }, i) => {
-            passEncoder.setVertexBuffer(0, material.buffer);
-            // passEncoder.setBindGroup(1, bindGroup);            
+        materials.forEach((material, i) => {
+            if (i === 1) updateTriangles(material);
+            passEncoder.setVertexBuffer(0, material.buffer);            
             const currentCount = material.getCount();
             passEncoder.draw( i === 0 ? 6 : 3, currentCount, 0, objectCount);    
             objectCount += currentCount
@@ -94,19 +88,21 @@ function useRender(canvasRef: { current: CanvasRefType }) {
         const cameraBuffer = makeCamera(device, camera)
 
         const triangleCount = 4;
-        const floorCount = 1;
+        const floorCount = 10;
         const objectBuffer = device.createBuffer({
-            size: 64 * 4 * (triangleCount + floorCount),
+            size: 64 * (triangleCount + ((1 + (floorCount*2))**2)),
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
         })    
                 
         const floorMesh = makeQuad(device, objectBuffer);
         floorMesh.makeObjects(floorCount, true);
-        const floorTexture = await makeMaterial(device, 'floor.jpeg')
+        updateFloor(floorMesh);
 
         const triangleMesh = makeTriangle(device, objectBuffer, floorMesh.getCount());
         triangleMesh.makeObjects(triangleCount);
         
+        const materials = [floorMesh, triangleMesh]
+
         const objectBindGroup = makeBindGroup(device, [cameraBuffer, objectBuffer]);
         
         const pipelineLayout = device.createPipelineLayout({
@@ -144,8 +140,7 @@ function useRender(canvasRef: { current: CanvasRefType }) {
             context, 
             pipeline,
             objectBindGroup.bindGroup,
-            [{ ...floorTexture, material: floorMesh }, { material: triangleMesh }]
-
+            materials
         );
     }
     
