@@ -1,73 +1,38 @@
-import { MouseEvent, useEffect, useRef } from "react";
-import { mat4 } from "gl-matrix";
+import { KeyboardEvent, MouseEvent, useEffect, useRef } from "react";
 
-import { MeshBufferType, makeQuad, makeTriangle } from "../buffer";
-import initCamera, { CameraType } from "../camera";
+import textureShader from '../shaders/texture.wgsl';
+import meshShader from '../shaders/mesh.wgsl';
 
-import triangleShader from '../shaders/triangle.wgsl';
+import { makeQuad, makeTriangle, meshBufferLayout } from "../buffer";
+import { CameraType } from "../camera";
 import makeMaterial from "../material";
 
-export type CanvasRefType = HTMLCanvasElement | null;
-
-function makeCamera(device: GPUDevice, cameraRef: { current?: CameraType }) {
-    const uniBuffer = device.createBuffer({
-        size: 64 * 2,
-        usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
-    })
-
-    cameraRef.current = initCamera(device, uniBuffer);
-    return uniBuffer;
-}
-
-function makeDepthStencil(device: GPUDevice): GPURenderPassDepthStencilAttachment {
-    const depthStencilBuffer = device.createTexture({
-        size: {
-            width: 300,
-            height: 150,
-            depthOrArrayLayers: 1
-        },
-        format: "depth32float",
-        usage: GPUTextureUsage.RENDER_ATTACHMENT,
-    });
-    const depthStencilView = depthStencilBuffer.createView({ format: "depth32float" });
-    
-    return {
-        view: depthStencilView,
-        depthClearValue: 1.0,
-        depthLoadOp: "clear",
-        depthStoreOp: "store",
-    };
-}
-
-let t = 0.0
-function updateTriangles(triangleMesh: MeshBufferType) {
-    t += 0.01
-    if (t > 2.0 * Math.PI) {
-        t -= 2.0 * Math.PI;
-    }
-
-    triangleMesh.update((o, i) => {
-        const model = mat4.create();
-        mat4.translate(model, model, o);
-        mat4.rotateZ(model, model, t);
-        return model;
-    });
-}
+import { 
+    CanvasRefType, 
+    PipelineType, 
+    makeBindGroup, 
+    makeCamera, 
+    makeDepthStencil, 
+    updateFloor, 
+    updateTriangles 
+} from "../utils";
 
 function startPipeline(
     device: GPUDevice, 
     context: GPUCanvasContext,
-    pipeline: GPURenderPipeline, 
-    bindGroup: GPUBindGroup,
-    triangleMesh: MeshBufferType
+    pipeline: GPURenderPipeline,
+    objectBindGroup: GPUBindGroup,
+    pipelines: PipelineType[], 
 ): () => void {
-    
     const depthStencilAttachment = makeDepthStencil(device);
 
+    const triangleMaterial = pipelines[1].material;
+    updateTriangles(triangleMaterial);
+    updateFloor(pipelines[0].material);
     let frameId: number;
     function frame() {
-        updateTriangles(triangleMesh);
-        
+    
+        updateTriangles(triangleMaterial);
         const commandEncoder = device.createCommandEncoder();
         const textureView = context.getCurrentTexture().createView();
 
@@ -85,15 +50,23 @@ function startPipeline(
         
         const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
         passEncoder.setPipeline(pipeline);
-        passEncoder.setVertexBuffer(0, triangleMesh.buffer);
-        passEncoder.setBindGroup(0, bindGroup);
-        passEncoder.draw(3, triangleMesh.getCount(), 0, 0);
+        passEncoder.setBindGroup(0, objectBindGroup);
+
+        let objectCount = 0
+        pipelines.forEach(({ bindGroup, material }, i) => {
+            passEncoder.setVertexBuffer(0, material.buffer);
+            // passEncoder.setBindGroup(1, bindGroup);            
+            const currentCount = material.getCount();
+            passEncoder.draw( i === 0 ? 6 : 3, currentCount, 0, objectCount);    
+            objectCount += currentCount
+        })
         passEncoder.end();
     
         device.queue.submit([commandEncoder.finish()]);
         frameId = requestAnimationFrame(frame);
     }
     frameId = requestAnimationFrame(frame);
+    
     return () => {       
         if (!Number.isInteger(frameId)) return;
         cancelAnimationFrame(frameId);
@@ -111,82 +84,35 @@ function useRender(canvasRef: { current: CanvasRefType }) {
         const context = canvas.getContext('webgpu') as GPUCanvasContext;
         const device = await adapter.requestDevice();
         const format = navigator.gpu.getPreferredCanvasFormat();
-      
+        
         context.configure({
           device,
           format,
           alphaMode: 'opaque',
         });
 
-        const uniBuffer = makeCamera(device, camera)
+        const cameraBuffer = makeCamera(device, camera)
 
-        const objBuffer = device.createBuffer({
-            size: 64 * 1024,
+        const triangleCount = 4;
+        const floorCount = 1;
+        const objectBuffer = device.createBuffer({
+            size: 64 * 4 * (triangleCount + floorCount),
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
-        })
+        })    
+                
+        const floorMesh = makeQuad(device, objectBuffer);
+        floorMesh.makeObjects(floorCount, true);
+        const floorTexture = await makeMaterial(device, 'floor.jpeg')
 
-        const triangleMesh = makeTriangle(device, objBuffer);
-        triangleMesh.makeObjects(400);
-
-        const quadMesh = makeQuad(device, objBuffer, 400);
-    
-
-        const bindGroupLayout = device.createBindGroupLayout({
-            entries: [
-                {
-                    binding: 0,
-                    visibility: GPUShaderStage.VERTEX,
-                    buffer: { type: 'uniform' }
-                },
-                {
-                    binding: 1,
-                    visibility: GPUShaderStage.VERTEX,
-                    buffer: { type: "read-only-storage", hasDynamicOffset: false }
-                },
-                {
-                    binding: 2,
-                    visibility: GPUShaderStage.FRAGMENT,
-                    texture: {}
-                },
-                {
-                    binding: 3,
-                    visibility: GPUShaderStage.FRAGMENT,
-                    sampler: {}
-                }
-            ]
-        })
-
-        const floorMaterial = await makeMaterial(device, 'floor.jpeg')
-        const bindGroup = device.createBindGroup({
-            layout: bindGroupLayout,
-            entries: [
-                {
-                    binding: 0,
-                    resource: {
-                        buffer: uniBuffer
-                    }
-                },
-                {
-                    binding: 1,
-                    resource: {
-                        buffer: objBuffer
-                    }
-                },
-                {
-                    binding: 2,
-                    resource: floorMaterial.view
-                },
-                {
-                    binding: 3,
-                    resource: floorMaterial.sampler
-                },
-            ]
-        })
-
+        const triangleMesh = makeTriangle(device, objectBuffer, floorMesh.getCount());
+        triangleMesh.makeObjects(triangleCount);
+        
+        const objectBindGroup = makeBindGroup(device, [cameraBuffer, objectBuffer]);
+        
         const pipelineLayout = device.createPipelineLayout({
-            bindGroupLayouts: [bindGroupLayout]
+            bindGroupLayouts: [objectBindGroup.bindGroupLayout]
         })
-
+    
         const pipeline = device.createRenderPipeline({
             layout: pipelineLayout,
             depthStencil: {
@@ -197,14 +123,14 @@ function useRender(canvasRef: { current: CanvasRefType }) {
             vertex: {
                 entryPoint: "vs_main",
                 module: device.createShaderModule({
-                    code: triangleShader
+                    code: meshShader
                 }),
-                buffers: [triangleMesh.bufferLayout]
+                buffers: [meshBufferLayout]
             },
             fragment: {
                 entryPoint: "fs_main",
                 module: device.createShaderModule({
-                    code: triangleShader
+                    code: meshShader
                 }),
                 targets: [{ format }]
             },
@@ -216,9 +142,10 @@ function useRender(canvasRef: { current: CanvasRefType }) {
         cleanup.current = startPipeline(
             device, 
             context, 
-            pipeline, 
-            bindGroup, 
-            triangleMesh
+            pipeline,
+            objectBindGroup.bindGroup,
+            [{ ...floorTexture, material: floorMesh }, { material: triangleMesh }]
+
         );
     }
     
@@ -228,15 +155,21 @@ function useRender(canvasRef: { current: CanvasRefType }) {
     }, [canvasRef.current])
 
     return {
+        handleKeyDown(e: KeyboardEvent<HTMLCanvasElement>) {
+            camera.current?.move(e.key);
+        },
+        handleKeyUp(e: KeyboardEvent<HTMLCanvasElement>) {
+            camera.current?.move(e.key, true);
+        },
         handleClick(e: MouseEvent<HTMLCanvasElement>) {
             canvasRef.current?.requestPointerLock();
         },
         handleMouseOut(e: MouseEvent<HTMLCanvasElement>) {
-            camera.current?.reset();
+            // camera.current?.reset();
         },
         handleMouseMove(e: MouseEvent<HTMLCanvasElement>) {
             if(!document.pointerLockElement) return;
-            camera.current?.update(e);
+            camera.current?.rotate(e);
         }
     }
 }

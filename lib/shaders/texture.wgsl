@@ -2,35 +2,36 @@ struct TransformData {
     view: mat4x4<f32>,
     projection: mat4x4<f32>,
 };
-@binding(0) @group(0) var<uniform> transformUBO: TransformData;
 
 struct ObjectData {
     model: array<mat4x4<f32>>
 }
-@binding(1) @group(0) var<storage, read> objects: ObjectData;
 
-struct Fragment {
+struct TextureFragment {
     @builtin(position) Position : vec4<f32>,
-    @location(0) TexCoord : vec4<f32>
+    @location(0) TexCoord : vec2<f32>
 }
+
+@binding(0) @group(0) var<uniform> transformUBO: TransformData;
+@binding(1) @group(0) var<storage, read> objects: ObjectData;
 
 @vertex
 fn vs_main(
     @builtin(instance_index) ID: u32,
     @location(0) vertexPostion: vec3<f32>, 
-    @location(1) vertexTexCoord: vec2<f32>) -> Fragment {
+    @location(1) vertexTexCoord: vec2<f32>) -> TextureFragment {
 
-    var output : Fragment;
+    var output : TextureFragment;
     output.Position = transformUBO.projection * transformUBO.view * objects.model[ID] * vec4<f32>(vertexPostion, 1.0);
     output.TexCoord = vertexTexCoord;
 
     return output;
 }
 
-@binding(2) @group(0) var myTexture: texture_2d<f32>;
-@binding(3) @group(0) var mySampler: sampler;
+@binding(0) @group(1) var myTexture: texture_2d<f32>;
+@binding(1) @group(1) var mySampler: sampler;
 
 @fragment
 fn fs_main(@location(0) TexCoord : vec2<f32>) -> @location(0) vec4<f32> {
-    return textSample(myTexture, mySampler, TexCoord);
+    return textureSample(myTexture, mySampler, TexCoord);
 }
