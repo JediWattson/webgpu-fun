@@ -3,13 +3,14 @@ import { mat4, vec3 } from "gl-matrix";
 type CreateModelType = (pos: vec3, i: number) => mat4
 
 export type MaterialBufferType = { 
+    type: string,
     buffer: GPUBuffer,
     update: (createModel: CreateModelType) => void, 
     makeObjects: (count: number, isFloor?: boolean) => void,
     getCount: () => number 
 }
 
-const makeBuffer = (verticesCoords: number[]) => 
+const makeBuffer = (verticesCoords: number[], type: string) => 
     (device: GPUDevice, objBuffer: GPUBuffer, offset: number = 0): MaterialBufferType => {
 
     const vertices = new Float32Array(verticesCoords);
@@ -34,7 +35,7 @@ const makeBuffer = (verticesCoords: number[]) =>
             }                
         } else {
             for(let i = 0; i < count; i++) {
-                objects.push([2, i, 0]);
+                objects.push([2, i, -0.5]);
             }    
         }
     }
@@ -47,6 +48,7 @@ const makeBuffer = (verticesCoords: number[]) =>
     }
  
     return {
+        type,
         buffer,
         getCount() {
             return objects.length;
@@ -59,20 +61,20 @@ const makeBuffer = (verticesCoords: number[]) =>
 // each point contains 3 position values, 3 color values
 export const makeTriangle = makeBuffer([
     0.0,  0.0,  0.5, 1.0, 0.0, 0.0,
-    0.0, -0.5, -0.5, 0.0, 1.0, 0.0, 
-    0.0,  0.5, -0.5, 0.0, 0.0, 1.0  
-])
+    0.0, -0.5, -0.5, 0.0, 1.0, 0.0,
+    0.0,  0.5, -0.5, 0.0, 0.0, 1.0
+], "TRI")
 
 // each point contains 3 position values, 2 texture pos values
 export const makeQuad = makeBuffer([
-    -0.5,  0.5, 0.0, 1.0, 0.0, 0.0,
-    -0.5, -0.5, 0.0, 0.0, 1.0, 0.0, 
-     0.5, -0.5, 0.0, 0.0, 0.0, 1.0,
+    -0.5,  0.5, 0.0, 1.0, 0.0,
+    -0.5, -0.5, 0.0, 1.0, 1.0,
+     0.5, -0.5, 0.0, 0.0, 1.0,
 
-     0.5, -0.5, 0.0, 1.0, 1.0, 1.0,
-     0.5,  0.5, 0.0, 0.0, 0.0, 1.0, 
-    -0.5,  0.5, 0.0, 0.0, 1.0, 0.0,
-])
+     0.5, -0.5, 0.0, 0.0, 1.0,
+     0.5,  0.5, 0.0, 0.0, 0.0,
+    -0.5,  0.5, 0.0, 1.0, 0.0,
+], "QUAD")
 
 export const meshBufferLayout: GPUVertexBufferLayout = {
     arrayStride: 24,
@@ -85,6 +87,22 @@ export const meshBufferLayout: GPUVertexBufferLayout = {
         {
             shaderLocation: 1,
             format: `float32x3`,
+            offset: 12
+        }
+    ]
+}
+
+export const textureBufferLayout: GPUVertexBufferLayout = {
+    arrayStride: 20,
+    attributes: [
+        {
+            shaderLocation: 0,
+            format: `float32x3`,
+            offset: 0
+        },
+        {
+            shaderLocation: 1,
+            format: `float32x2`,
             offset: 12
         }
     ]

@@ -1,11 +1,10 @@
+import { BindGroupType } from "./utils";
 
 export type MaterialType = { 
-    bindGroup: GPUBindGroup,
-    bindGroupLayout: GPUBindGroupLayout,
     texture: GPUTexture 
 }
 
-export default async function makeMaterial(device: GPUDevice, url: string): Promise<MaterialType>  {
+export default async function makeMaterial(device: GPUDevice, url: string): Promise<MaterialType & BindGroupType>  {
     const response: Response = await fetch(url);
     const blob: Blob = await response.blob();
     const imageData: ImageBitmap = await createImageBitmap(blob);
