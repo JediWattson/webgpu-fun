@@ -2,17 +2,18 @@ struct TransformData {
     view: mat4x4<f32>,
     projection: mat4x4<f32>,
 };
-@binding(0) @group(0) var<uniform> transformUBO: TransformData;
 
 struct ObjectData {
     model: array<mat4x4<f32>>
 }
-@binding(1) @group(0) var<storage, read> objects: ObjectData;
 
 struct Fragment {
     @builtin(position) Position : vec4<f32>,
-    @location(0) Color : vec4<f32>
+    @location(0) Color : vec4<f32>,
 }
+
+@binding(0) @group(0) var<uniform> transformUBO: TransformData;
+@binding(1) @group(0) var<storage, read> objects: ObjectData;
 
 @vertex
 fn vs_main(

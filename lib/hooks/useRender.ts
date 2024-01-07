@@ -2,10 +2,15 @@ import { KeyboardEvent, MouseEvent, useEffect, useRef } from "react";
 
 import textureShader from '../shaders/texture.wgsl';
 import meshShader from '../shaders/mesh.wgsl';
-
-import { makeQuad, makeTriangle, meshBufferLayout } from "../buffer";
 import { CameraType } from "../camera";
 import makeMaterial from "../material";
+
+import { 
+    makeQuad, 
+    makeTriangle, 
+    meshBufferLayout, 
+    textureBufferLayout 
+} from "../buffer";
 
 import { 
     CanvasRefType, 
@@ -13,26 +18,23 @@ import {
     makeBindGroup, 
     makeCamera, 
     makeDepthStencil, 
+    makePipeline, 
     updateFloor, 
     updateTriangles 
 } from "../utils";
 
+const triangleCount = 40;
+const floorCount = 10;
+
 function startPipeline(
     device: GPUDevice, 
     context: GPUCanvasContext,
-    pipeline: GPURenderPipeline,
-    objectBindGroup: GPUBindGroup,
-    pipelines: PipelineType[], 
+    pipelines: PipelineType[]
 ): () => void {
     const depthStencilAttachment = makeDepthStencil(device);
-
-    const triangleMaterial = pipelines[1].material;
-    updateTriangles(triangleMaterial);
-    updateFloor(pipelines[0].material);
+    
     let frameId: number;
     function frame() {
-    
-        updateTriangles(triangleMaterial);
         const commandEncoder = device.createCommandEncoder();
         const textureView = context.getCurrentTexture().createView();
 
@@ -49,17 +51,24 @@ function startPipeline(
         };
         
         const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
-        passEncoder.setPipeline(pipeline);
-        passEncoder.setBindGroup(0, objectBindGroup);
+        pipelines.forEach(({ bindGroups, pipeline, materials }) => {
+            passEncoder.setPipeline(pipeline);
+            bindGroups.forEach((bindGroup, i) => {
+                passEncoder.setBindGroup(i, bindGroup);    
+            })
+            let objectCount = 0
+            materials.forEach((material, i) => {
+                if (material.type === "TRI") updateTriangles(material);
 
-        let objectCount = 0
-        pipelines.forEach(({ bindGroup, material }, i) => {
-            passEncoder.setVertexBuffer(0, material.buffer);
-            // passEncoder.setBindGroup(1, bindGroup);            
-            const currentCount = material.getCount();
-            passEncoder.draw( i === 0 ? 6 : 3, currentCount, 0, objectCount);    
-            objectCount += currentCount
+                passEncoder.setVertexBuffer(0, material.buffer);            
+                const currentCount = material.getCount();
+                const vertices = material.type === "QUAD" ? 6 : 3;
+                passEncoder.draw(vertices, currentCount, 0, objectCount);    
+                objectCount += currentCount
+
+            })
         })
+
         passEncoder.end();
     
         device.queue.submit([commandEncoder.finish()]);
@@ -93,59 +102,48 @@ function useRender(canvasRef: { current: CanvasRefType }) {
 
         const cameraBuffer = makeCamera(device, camera)
 
-        const triangleCount = 4;
-        const floorCount = 1;
-        const objectBuffer = device.createBuffer({
-            size: 64 * 4 * (triangleCount + floorCount),
+        const meshBuffer = device.createBuffer({
+            size: 64 * triangleCount,
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
         })    
-                
-        const floorMesh = makeQuad(device, objectBuffer);
-        floorMesh.makeObjects(floorCount, true);
-        const floorTexture = await makeMaterial(device, 'floor.jpeg')
 
-        const triangleMesh = makeTriangle(device, objectBuffer, floorMesh.getCount());
+        const triangleMesh = makeTriangle(device, meshBuffer);
         triangleMesh.makeObjects(triangleCount);
-        
-        const objectBindGroup = makeBindGroup(device, [cameraBuffer, objectBuffer]);
-        
-        const pipelineLayout = device.createPipelineLayout({
-            bindGroupLayouts: [objectBindGroup.bindGroupLayout]
-        })
-    
-        const pipeline = device.createRenderPipeline({
-            layout: pipelineLayout,
-            depthStencil: {
-                format: "depth32float",
-                depthWriteEnabled: true,
-                depthCompare: "less-equal"
-            },
-            vertex: {
-                entryPoint: "vs_main",
-                module: device.createShaderModule({
-                    code: meshShader
-                }),
-                buffers: [meshBufferLayout]
-            },
-            fragment: {
-                entryPoint: "fs_main",
-                module: device.createShaderModule({
-                    code: meshShader
-                }),
-                targets: [{ format }]
-            },
-            primitive : {
-                topology : "triangle-list"
-            },
-        })
+        updateTriangles(triangleMesh);
 
+        const meshBindGroup = makeBindGroup(device, [cameraBuffer, meshBuffer]);
+        const pipeline = makePipeline(
+            device,             
+            meshShader, 
+            meshBufferLayout,
+            [meshBindGroup],
+            [triangleMesh]
+        );
+
+        const textureBuffer = device.createBuffer({
+            size: 64 * (1 + (floorCount*2))**2,
+            usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
+        })    
+
+        const floorMesh = makeQuad(device, textureBuffer);
+        floorMesh.makeObjects(floorCount, true);
+        updateFloor(floorMesh);
+
+        const floorTexture = await makeMaterial(device, 'floor.jpeg')
+        const textureBindGroup = makeBindGroup(device, [cameraBuffer, textureBuffer]);
+
+        const texturePipeline = makePipeline(
+            device, 
+            textureShader, 
+            textureBufferLayout,
+            [textureBindGroup, floorTexture], 
+            [floorMesh]
+        );
+        
         cleanup.current = startPipeline(
             device, 
             context, 
-            pipeline,
-            objectBindGroup.bindGroup,
-            [{ ...floorTexture, material: floorMesh }, { material: triangleMesh }]
-
+            [pipeline, texturePipeline]
         );
     }
     
