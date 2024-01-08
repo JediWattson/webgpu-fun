@@ -3,25 +3,38 @@ import { mat4 } from "gl-matrix";
 import { MaterialBufferType } from "./buffer";
 import initCamera, { CameraType } from "./camera";
 
-export type CanvasRefType = HTMLCanvasElement | null;
 export type BindGroupType = { 
     bindGroup: GPUBindGroup, 
     bindGroupLayout: GPUBindGroupLayout 
 }
+
 export type PipelineType = { 
     materials: MaterialBufferType[], 
     pipeline: GPURenderPipeline, 
     bindGroups: GPUBindGroup[] 
 }
 
-export function makeCamera(device: GPUDevice, cameraRef: { current?: CameraType }) {
-    const uniBuffer = device.createBuffer({
+type MakeEventsType = { event: string, cb: (e: Event) => void }[]
+
+export const makeEvents = (canvas: HTMLCanvasElement, camera: CameraType): MakeEventsType => [
+    { event: 'keydown', cb: e => camera.move((e as KeyboardEvent).key) },
+    { event: 'keyup', cb: e => camera.move((e as KeyboardEvent).key, true) },
+    { event: 'click', cb: () => canvas.requestPointerLock() },
+    { event: 'mouseout', cb: () => camera.reset() },
+    { event: 'mousemove', cb: e => {
+        if(!document.pointerLockElement) return;
+        camera?.rotate(e as MouseEvent);
+    }}
+]
+
+export function makeCamera(device: GPUDevice) {
+    const cameraBuffer = device.createBuffer({
         size: 64 * 2,
         usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
     })
 
-    cameraRef.current = initCamera(device, uniBuffer);
-    return uniBuffer;
+    const camera = initCamera(device, cameraBuffer);
+    return { cameraBuffer, camera };
 }
 
 export function makeDepthStencil(device: GPUDevice): GPURenderPassDepthStencilAttachment {
@@ -72,50 +85,6 @@ export function makeBindGroup(device: GPUDevice, buffers: GPUBuffer[]): BindGrou
     })
 
     return { bindGroup, bindGroupLayout }
-}
-
-export function makePipeline(
-    device: GPUDevice, 
-    shader: string, 
-    bufferLayout: GPUVertexBufferLayout,
-    bindGroups: BindGroupType[], 
-    materials: MaterialBufferType[]
-) {    
-    const pipelineLayout = device.createPipelineLayout({ 
-        bindGroupLayouts: bindGroups.map(b => b.bindGroupLayout)
-    });
-
-    const pipeline = device.createRenderPipeline({
-        layout: pipelineLayout,
-        depthStencil: {
-            format: "depth32float",
-            depthWriteEnabled: true,
-            depthCompare: "less-equal"
-        },
-        vertex: {
-            entryPoint: "vs_main",
-            module: device.createShaderModule({
-                code: shader
-            }),
-            buffers: [bufferLayout]
-        },
-        fragment: {
-            entryPoint: "fs_main",
-            module: device.createShaderModule({
-                code: shader
-            }),
-            targets: [{ format: "bgra8unorm" }]
-        },
-        primitive : {
-            topology : "triangle-list"
-        },
-    })
-
-    return {
-        pipeline,
-        bindGroups: bindGroups.map(b => b.bindGroup),
-        materials
-    }
 }
 
 export function updateFloor(floorTexture: MaterialBufferType) {

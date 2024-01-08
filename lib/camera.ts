@@ -1,10 +1,9 @@
 import { mat4, vec3 } from "gl-matrix";
-import { MouseEvent } from "react";
 
 export type CameraType = { 
     reset: () => void, 
     move: (key: string, isUpPress?: boolean) => void, 
-    rotate: (e: MouseEvent<HTMLCanvasElement>) => void 
+    rotate: (e: MouseEvent) => void 
 }
 
 export function Deg2Rad(theta: number) : number {
