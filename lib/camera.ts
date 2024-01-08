@@ -21,7 +21,12 @@ export default function initCamera(device: GPUDevice) {
     const target = vec3.create();
     const view = mat4.create();
 
+    const maxFolcrum = 89
+    const moveDiff = 0.05
+    let frameNumber: number
+    const keysDown: { [key: string]: number } = {}
     const eulers = [0, 0];
+
     function setMovement() {
         vec3.copy(forwards, [
             Math.cos(Deg2Rad(eulers[1])) * Math.cos(Deg2Rad(eulers[0])),
@@ -35,79 +40,55 @@ export default function initCamera(device: GPUDevice) {
         device.queue.writeBuffer(uniBuffer, 0, <ArrayBuffer>view);
     }    
 
-    let movement: boolean = false;
-    const keysDown = { forward: 0, right: 0 }
     function moveCamera() {
-        let moved = false
-        if (keysDown.forward !== 0) {
-            moved = true
+        if (['w', 's'].some(k => k in keysDown)) {
+            let vert = moveDiff
+            if ('s' in keysDown || keysDown.s > keysDown.w) vert = -moveDiff
+
             vec3.scaleAndAdd(
                 position, position, 
-                forwards, keysDown.forward
+                forwards, vert
             );
         } 
 
-        if (keysDown.right !== 0) {
-            moved = true
+        if (['a', 'd'].some(k => k in keysDown)) {
+            let hor = moveDiff
+            if ('a' in keysDown || keysDown.a > keysDown.d) hor = -moveDiff
+            
             vec3.scaleAndAdd(
                 position, position, 
-                right, keysDown.right
+                right, hor
             );    
         }
-
-        if (!moved) return;
         
-        setMovement()
+        if (Object.keys(keysDown).length === 0) return;
 
-        if (movement)
-            requestAnimationFrame(moveCamera);
+        setMovement()
+        frameNumber = requestAnimationFrame(moveCamera);
     }
 
-
-    const maxFolcrum = 89
-    const moveDiff = 0.02
-
     const camera: WebGPUApp.CameraType = {
-        reset() {
-            eulers.forEach((e, i) => {eulers[i] = 0})
-            setMovement();
-        },
-        move(key, isUpPress = false) {            
+        move(key, isUpPress = false) {   
+            if (!['w', 'a', 's', 'd'].includes(key)) return
+
             if (isUpPress) {
-                if (["w", "s"].includes(key)) {
-                    keysDown.forward = 0;
-                } else if (["a", "d"].includes(key)) {
-                    keysDown.right = 0;
-                }
-                
-                movement = Object.values(keysDown).some(v => v !== 0);
+                delete keysDown[key]
                 return;
             }
 
-            switch (key) {
-                case "w":
-                    keysDown.forward = moveDiff;
-                    break;
-                case "s":
-                    keysDown.forward = -moveDiff;
-                    break;
-                case "a":
-                    keysDown.right = -moveDiff;
-                    break;
-                case "d":
-                    keysDown.right = moveDiff;
-                    break;
-            }
-            if (!movement) {
-                movement = true
-                requestAnimationFrame(moveCamera)
-            }
+            keysDown[key] = Object.keys(keysDown).length
+            cancelAnimationFrame(frameNumber)
+            frameNumber = requestAnimationFrame(moveCamera)
         },
         rotate({ movementX, movementY }: { movementX: number, movementY: number }) {
             eulers[0] = Math.min(maxFolcrum, Math.max(-maxFolcrum, eulers[0] - movementY / 5))            
             eulers[1] -= movementX / 5;
             eulers[1] %= 360;
 
+            setMovement();
+        },
+        reset() {
+            eulers.forEach((e, i) => {eulers[i] = 0})
             setMovement();
         }
     }
