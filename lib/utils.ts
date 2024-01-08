@@ -1,5 +1,4 @@
 import { mat4 } from "gl-matrix";
-import initCamera from "./camera";
 
 export const makeEvents = (canvas: HTMLCanvasElement, camera: WebGPUApp.CameraType): WebGPUApp.MakeEventsType => [
     { event: 'keydown', cb: e => camera.move((e as KeyboardEvent).key) },
@@ -11,16 +10,6 @@ export const makeEvents = (canvas: HTMLCanvasElement, camera: WebGPUApp.CameraTy
         camera?.rotate(e as MouseEvent);
     }}
 ]
-
-export function makeCamera(device: GPUDevice) {
-    const cameraBuffer = device.createBuffer({
-        size: 64 * 2,
-        usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
-    })
-
-    const camera = initCamera(device, cameraBuffer);
-    return { cameraBuffer, camera };
-}
 
 export function makeDepthStencil(device: GPUDevice): GPURenderPassDepthStencilAttachment {
     const depthStencilBuffer = device.createTexture({

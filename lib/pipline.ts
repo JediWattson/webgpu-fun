@@ -1,12 +1,11 @@
-import { MaterialBufferType } from "./buffer";
-import { BindGroupType, PipelineType, makeDepthStencil, updateTriangles } from "./utils";
+import { makeDepthStencil, updateTriangles } from "./utils";
 
 export function makePipeline(
     device: GPUDevice, 
     shader: string, 
     bufferLayout: GPUVertexBufferLayout,
-    bindGroups: BindGroupType[], 
-    materials: MaterialBufferType[]
+    bindGroups: WebGPUApp.BindGroupType[], 
+    materials: WebGPUApp.MaterialBufferType[]
 ) {    
     const pipelineLayout = device.createPipelineLayout({ 
         bindGroupLayouts: bindGroups.map(b => b.bindGroupLayout)
@@ -48,7 +47,7 @@ export function makePipeline(
 export function runPipeline(
     device: GPUDevice, 
     context: GPUCanvasContext,
-    pipelines: PipelineType[]
+    pipelines: WebGPUApp.PipelineType[]
 ): () => void {
     const depthStencilAttachment = makeDepthStencil(device);
     
