@@ -76,19 +76,15 @@ export function runPipeline(
             })
             let objectCount = 0
             materials.forEach((material, i) => {
-                if (material.type === "TRI") updateTriangles(material);
-
+                if (material.updateMaterial) material.updateMaterial(material);
                 passEncoder.setVertexBuffer(0, material.buffer);            
-                const currentCount = material.getCount();
-                const vertices = material.type === "QUAD" ? 6 : 3;
-                passEncoder.draw(vertices, currentCount, 0, objectCount);    
+                const currentCount = material.getCount();                
+                passEncoder.draw(material.verts, currentCount, 0, objectCount);    
                 objectCount += currentCount
-
             })
         })
 
         passEncoder.end();
-    
         device.queue.submit([commandEncoder.finish()]);
         frameId = requestAnimationFrame(frame);
     }

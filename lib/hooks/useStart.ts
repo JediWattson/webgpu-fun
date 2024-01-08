@@ -34,10 +34,11 @@ export function useStart(context: GPUCanvasContext){
             device, 
             cameraBuffer, 
             bufferSize: 64 * floorCount, 
+            updateMaterial: updateTriangles,
             bufferCb: (buffer: GPUBuffer) => {
                 const triangleMesh = makeTriangle(device, buffer);
                 triangleMesh.makeObjects(triangleCount);
-                updateTriangles(triangleMesh);
+                triangleMesh.updateMaterial = updateTriangles;
                 return triangleMesh
             } 
         }
@@ -46,7 +47,8 @@ export function useStart(context: GPUCanvasContext){
             device, 
             cameraBuffer, 
             texturePath: 'floor.jpeg', 
-            bufferSize: 64 * (1 + (floorCount*2))**2, 
+            bufferSize: 64 * (1 + (floorCount*2))**2,
+            updateMaterial: updateFloor,
             bufferCb: (buffer: GPUBuffer) => {
                 const floorMesh = makeQuad(device, buffer);
                 floorMesh.makeObjects(floorCount, true);

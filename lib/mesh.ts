@@ -18,7 +18,6 @@ const meshBufferLayout: GPUVertexBufferLayout = {
     ]
 }
 
-const triangleCount = 40;
 export function makeMeshPipeline({
     device, 
     cameraBuffer,

@@ -26,10 +26,11 @@ namespace WebGPUApp {
     }
 
     export type MaterialBufferType = { 
-        type: string,
+        verts: number,
         buffer: GPUBuffer,
         update: (createModel: CreateModelType) => void, 
         makeObjects: (count: number, isFloor?: boolean) => void,
+        updateMaterial?: (mesh: MaterialBufferType) => void,
         getCount: () => number 
     }
 

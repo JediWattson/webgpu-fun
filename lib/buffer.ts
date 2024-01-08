@@ -1,6 +1,6 @@
 import { vec3 } from "gl-matrix";
 
-const makeBuffer = (verticesCoords: number[], type: string) => 
+const makeBuffer = (verticesCoords: number[], verts: number) => 
     (device: GPUDevice, objBuffer: GPUBuffer, offset: number = 0): WebGPUApp.MaterialBufferType => {
 
     const vertices = new Float32Array(verticesCoords);
@@ -37,7 +37,7 @@ const makeBuffer = (verticesCoords: number[], type: string) =>
     }
  
     return {
-        type,
+        verts,
         buffer,
         getCount() {
             return objects.length;
@@ -52,7 +52,7 @@ export const makeTriangle = makeBuffer([
     0.0,  0.0,  0.5, 1.0, 0.0, 0.0,
     0.0, -0.5, -0.5, 0.0, 1.0, 0.0,
     0.0,  0.5, -0.5, 0.0, 0.0, 1.0
-], "TRI")
+], 3)
 
 // each point contains 3 position values, 2 texture pos values
 export const makeQuad = makeBuffer([
@@ -63,4 +63,4 @@ export const makeQuad = makeBuffer([
      0.5, -0.5, 0.0, 0.0, 1.0,
      0.5,  0.5, 0.0, 0.0, 0.0,
     -0.5,  0.5, 0.0, 1.0, 0.0,
-], "QUAD")
+], 6)
