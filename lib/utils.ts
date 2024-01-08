@@ -1,22 +1,7 @@
 import { mat4 } from "gl-matrix";
+import initCamera from "./camera";
 
-import { MaterialBufferType } from "./buffer";
-import initCamera, { CameraType } from "./camera";
-
-export type BindGroupType = { 
-    bindGroup: GPUBindGroup, 
-    bindGroupLayout: GPUBindGroupLayout 
-}
-
-export type PipelineType = { 
-    materials: MaterialBufferType[], 
-    pipeline: GPURenderPipeline, 
-    bindGroups: GPUBindGroup[] 
-}
-
-type MakeEventsType = { event: string, cb: (e: Event) => void }[]
-
-export const makeEvents = (canvas: HTMLCanvasElement, camera: CameraType): MakeEventsType => [
+export const makeEvents = (canvas: HTMLCanvasElement, camera: WebGPUApp.CameraType): WebGPUApp.MakeEventsType => [
     { event: 'keydown', cb: e => camera.move((e as KeyboardEvent).key) },
     { event: 'keyup', cb: e => camera.move((e as KeyboardEvent).key, true) },
     { event: 'click', cb: () => canvas.requestPointerLock() },
@@ -57,7 +42,7 @@ export function makeDepthStencil(device: GPUDevice): GPURenderPassDepthStencilAt
     };
 }
 
-export function makeBindGroup(device: GPUDevice, buffers: GPUBuffer[]): BindGroupType {
+export function makeBindGroup(device: GPUDevice, buffers: GPUBuffer[]): WebGPUApp.BindGroupType {
     const bindGroupLayoutEntries: GPUBindGroupLayoutEntry[] = [
         {
             // perspective
@@ -87,7 +72,7 @@ export function makeBindGroup(device: GPUDevice, buffers: GPUBuffer[]): BindGrou
     return { bindGroup, bindGroupLayout }
 }
 
-export function updateFloor(floorTexture: MaterialBufferType) {
+export function updateFloor(floorTexture: WebGPUApp.MaterialBufferType) {
     floorTexture.update((pos, i) => {            
         const model = mat4.create();
         mat4.translate(model, model, pos);        
@@ -96,7 +81,7 @@ export function updateFloor(floorTexture: MaterialBufferType) {
 }
 
 let t = 0.0
-export function updateTriangles(triangleMesh: MaterialBufferType) {
+export function updateTriangles(triangleMesh: WebGPUApp.MaterialBufferType) {
     t += 0.01
     if (t > 2.0 * Math.PI) {
         t -= 2.0 * Math.PI;

@@ -1,16 +1,10 @@
 import { mat4, vec3 } from "gl-matrix";
 
-export type CameraType = { 
-    reset: () => void, 
-    move: (key: string, isUpPress?: boolean) => void, 
-    rotate: (e: MouseEvent) => void 
-}
-
 export function Deg2Rad(theta: number) : number {
     return theta * Math.PI / 180;
 }
 
-export default function initCamera(device: GPUDevice, uniBuffer: GPUBuffer): CameraType {
+export default function initCamera(device: GPUDevice, uniBuffer: GPUBuffer): WebGPUApp.CameraType {
 
     const projection = mat4.create();
     mat4.perspective(projection,  (2 * Math.PI) / 5, 1, 0.1, 10);

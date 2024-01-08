@@ -3,7 +3,6 @@ import { useEffect, useRef, useState } from "react";
 import textureShader from '../shaders/texture.wgsl';
 import meshShader from '../shaders/mesh.wgsl';
 
-import { CameraType } from "../camera";
 import { runPipeline, makePipeline } from "../pipline";
 import makeMaterial from "../material";
 
@@ -26,7 +25,7 @@ const floorCount = 10;
 
 export function useStart(context: GPUCanvasContext){
     const cleanupRef = useRef(() => {})
-    const [camera, setCamera] = useState<CameraType>()
+    const [camera, setCamera] = useState<WebGPUApp.CameraType>()
     const init = async () => {        
         const adapter = await navigator.gpu?.requestAdapter();
         if (!adapter) return;
