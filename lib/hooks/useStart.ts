@@ -5,6 +5,12 @@ import { runPipeline } from "../pipline";
 import { makeMeshPipeline } from "../mesh";
 import { makeTexturePipeline } from "../texture";
 
+import { makeQuad, makeTriangle } from "../buffer";
+import { updateFloor, updateTriangles } from "../utils";
+
+const floorCount = 40
+const triangleCount = 40;
+
 export function useStart(context: GPUCanvasContext){
     const cleanupRef = useRef(() => {})
     const [camera, setCamera] = useState<WebGPUApp.CameraType>()
@@ -24,8 +30,33 @@ export function useStart(context: GPUCanvasContext){
         const { uniBuffer: cameraBuffer, camera: initCam } = initCamera(device)
         setCamera(initCam)
         
-        const meshPipeline = makeMeshPipeline(device, cameraBuffer);
-        const texturePipeline = await makeTexturePipeline(device, cameraBuffer);
+        const meshOpts = { 
+            device, 
+            cameraBuffer, 
+            bufferSize: 64 * floorCount, 
+            bufferCb: (buffer: GPUBuffer) => {
+                const triangleMesh = makeTriangle(device, buffer);
+                triangleMesh.makeObjects(triangleCount);
+                updateTriangles(triangleMesh);
+                return triangleMesh
+            } 
+        }
+
+        const textureOpts = { 
+            device, 
+            cameraBuffer, 
+            texturePath: 'floor.jpeg', 
+            bufferSize: 64 * (1 + (floorCount*2))**2, 
+            bufferCb: (buffer: GPUBuffer) => {
+                const floorMesh = makeQuad(device, buffer);
+                floorMesh.makeObjects(floorCount, true);
+                updateFloor(floorMesh);  
+                return floorMesh      
+            } 
+        }
+
+        const texturePipeline = await makeTexturePipeline(textureOpts);
+        const meshPipeline = makeMeshPipeline(meshOpts);
 
         cleanupRef.current = runPipeline(
             device, 

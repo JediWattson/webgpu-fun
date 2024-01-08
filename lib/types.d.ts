@@ -9,6 +9,15 @@ namespace WebGPUApp {
     export type MaterialType = { 
         texture: GPUTexture 
     }
+
+    export type BufferPipelineType = {
+        device: GPUDevice, 
+        cameraBuffer: GPUBuffer,
+        texturePath?: string,
+        bufferSize: number,
+        bufferCb: (buffer: GPUBuffer) => MaterialBufferType
+    }
+    
     
     export type CameraType = { 
         reset: () => void, 

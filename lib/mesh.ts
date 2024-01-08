@@ -1,25 +1,42 @@
 import meshShader from './shaders/mesh.wgsl'
 import { makePipeline } from "./pipline";
-import { makeTriangle, meshBufferLayout } from "./buffer";
-import { makeBindGroup, updateTriangles } from "./utils";
+import { makeBindGroup } from "./utils";
+
+const meshBufferLayout: GPUVertexBufferLayout = {
+    arrayStride: 24,
+    attributes: [
+        {
+            shaderLocation: 0,
+            format: `float32x3`,
+            offset: 0
+        },
+        {
+            shaderLocation: 1,
+            format: `float32x3`,
+            offset: 12
+        }
+    ]
+}
 
 const triangleCount = 40;
-export function makeMeshPipeline(device: GPUDevice, cameraBuffer: GPUBuffer) {
+export function makeMeshPipeline({
+    device, 
+    cameraBuffer,
+    bufferSize,
+    bufferCb
+}: WebGPUApp.BufferPipelineType) {
     const meshBuffer = device.createBuffer({
-        size: 64 * triangleCount,
+        size: bufferSize,
         usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
     })    
 
-    const triangleMesh = makeTriangle(device, meshBuffer);
-    triangleMesh.makeObjects(triangleCount);
-    updateTriangles(triangleMesh);
-
+    const pipelineBuffer = bufferCb(meshBuffer)
     const meshBindGroup = makeBindGroup(device, [cameraBuffer, meshBuffer]);
     return makePipeline(
         device,
         meshShader, 
         meshBufferLayout,
         [meshBindGroup],
-        [triangleMesh]
+        [pipelineBuffer]
     );
 }

@@ -1,31 +1,46 @@
 import textureShader from './shaders/texture.wgsl';
 
-import { makeBindGroup, updateFloor } from "./utils";
-import { makeQuad, textureBufferLayout } from "./buffer";
+import { makeBindGroup } from "./utils";
 import makeMaterial from "./material";
 import { makePipeline } from "./pipline";
 
-const floorCount = 10;
+const textureBufferLayout: GPUVertexBufferLayout = {
+    arrayStride: 20,
+    attributes: [
+        {
+            shaderLocation: 0,
+            format: `float32x3`,
+            offset: 0
+        },
+        {
+            shaderLocation: 1,
+            format: `float32x2`,
+            offset: 12
+        }
+    ]
+}
 
-export async function makeTexturePipeline(device: GPUDevice, cameraBuffer: GPUBuffer) {
-
+export async function makeTexturePipeline({
+    device, 
+    cameraBuffer,
+    texturePath = '',
+    bufferSize,
+    bufferCb
+}: WebGPUApp.BufferPipelineType) {
     const textureBuffer = device.createBuffer({
-        size: 64 * (1 + (floorCount*2))**2,
+        size: bufferSize,
         usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
     })    
 
-    const floorMesh = makeQuad(device, textureBuffer);
-    floorMesh.makeObjects(floorCount, true);
-    updateFloor(floorMesh);
-
-    const floorTexture = await makeMaterial(device, 'floor.jpeg')
+    const materialBuffer = bufferCb(textureBuffer)
+    const textureMaterial = await makeMaterial(device, texturePath)
     const textureBindGroup = makeBindGroup(device, [cameraBuffer, textureBuffer]);
 
     return makePipeline(
         device, 
         textureShader, 
         textureBufferLayout,
-        [textureBindGroup, floorTexture], 
-        [floorMesh]
+        [textureBindGroup, textureMaterial], 
+        [materialBuffer]
     );
 }
