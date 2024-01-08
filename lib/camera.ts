@@ -1,17 +1,14 @@
 import { mat4, vec3 } from "gl-matrix";
-import { MouseEvent } from "react";
-
-export type CameraType = { 
-    reset: () => void, 
-    move: (key: string, isUpPress?: boolean) => void, 
-    rotate: (e: MouseEvent<HTMLCanvasElement>) => void 
-}
 
 export function Deg2Rad(theta: number) : number {
     return theta * Math.PI / 180;
 }
 
-export default function initCamera(device: GPUDevice, uniBuffer: GPUBuffer): CameraType {
+export default function initCamera(device: GPUDevice) {
+    const uniBuffer = device.createBuffer({
+        size: 64 * 2,
+        usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+    })
 
     const projection = mat4.create();
     mat4.perspective(projection,  (2 * Math.PI) / 5, 1, 0.1, 10);
@@ -69,7 +66,8 @@ export default function initCamera(device: GPUDevice, uniBuffer: GPUBuffer): Cam
 
     const maxFolcrum = 89
     const moveDiff = 0.02
-    return {
+
+    const camera: WebGPUApp.CameraType = {
         reset() {
             eulers.forEach((e, i) => {eulers[i] = 0})
             setMovement();
@@ -113,4 +111,6 @@ export default function initCamera(device: GPUDevice, uniBuffer: GPUBuffer): Cam
             setMovement();
         }
     }
+
+    return { uniBuffer, camera };
 }

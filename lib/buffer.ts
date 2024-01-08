@@ -1,17 +1,7 @@
-import { mat4, vec3 } from "gl-matrix";
-
-type CreateModelType = (pos: vec3, i: number) => mat4
-
-export type MaterialBufferType = { 
-    type: string,
-    buffer: GPUBuffer,
-    update: (createModel: CreateModelType) => void, 
-    makeObjects: (count: number, isFloor?: boolean) => void,
-    getCount: () => number 
-}
+import { vec3 } from "gl-matrix";
 
 const makeBuffer = (verticesCoords: number[], type: string) => 
-    (device: GPUDevice, objBuffer: GPUBuffer, offset: number = 0): MaterialBufferType => {
+    (device: GPUDevice, objBuffer: GPUBuffer, offset: number = 0): WebGPUApp.MaterialBufferType => {
 
     const vertices = new Float32Array(verticesCoords);
     const descriptor: GPUBufferDescriptor = {
@@ -23,7 +13,6 @@ const makeBuffer = (verticesCoords: number[], type: string) =>
     const buffer = device.createBuffer(descriptor);
     new Float32Array(buffer.getMappedRange()).set(vertices);
     buffer.unmap();
-
 
     const objects: vec3[] = [];   
     function makeObjects(count: number = 1, isFloor?: boolean) {
@@ -40,7 +29,7 @@ const makeBuffer = (verticesCoords: number[], type: string) =>
         }
     }
 
-    function update(createModel: CreateModelType) {
+    function update(createModel: WebGPUApp.CreateModelType) {
         objects.forEach((pos, i) => {                                
             const model = createModel(pos, i);
             device.queue.writeBuffer(objBuffer, (offset + i)*64, <ArrayBuffer>model);
