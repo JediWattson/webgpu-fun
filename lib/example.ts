@@ -1,5 +1,5 @@
 import { bindGroupLayoutOpts, texturePipelineOpts } from "./config";
-import { vec3 } from "gl-matrix";
+import { Vec3, vec3 } from "wgpu-matrix";
 import textureShader from "./shaders/texture.wgsl";
 import meshShader from "./shaders/mesh.wgsl";
 
@@ -34,7 +34,9 @@ export default [
         },
         bufferCb: (device: GPUDevice, buffer: GPUBuffer) => {
             const floorMesh = makeQuad(device, buffer);
-            const objects: vec3[] = Array(floorCount**2).fill(0).map((_, i) => [i%floorCount, Math.floor(i/floorCount), -1]);
+            const objects = Array(floorCount**2).fill(0).map(
+                (_, i) => vec3.create(i%floorCount, Math.floor(i/floorCount), -1)
+            );
             floorMesh.makeObjects(objects);
             updateFloor(floorMesh);  
             return floorMesh      
@@ -62,7 +64,7 @@ export default [
         }, 
         bufferCb: (device: GPUDevice, buffer: GPUBuffer) => {
             const triangleMesh = makeTriangle(device, buffer);
-            const objects: vec3[] = Array(triangleCount).fill(0).map((_, i) => [2, i, -0.5]);
+            const objects = Array(triangleCount).fill(0).map((_, i) =>  vec3.create(2, i, -0.5));
             triangleMesh.makeObjects(objects);
             triangleMesh.updateMaterial = updateTriangles;
             return triangleMesh

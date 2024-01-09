@@ -5,7 +5,7 @@ declare module '*.wgsl' {
 }
 
 namespace WebGPUApp {
-    export type CreateModelType = (pos: vec3, i: number) => mat4
+    export type CreateModelType = (pos: vec3) => mat4
     export type MakeMaterialType = Promise<MaterialType & BindGroupType>
     export type MaterialType = { 
         texture: GPUTexture 
