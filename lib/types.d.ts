@@ -28,11 +28,14 @@ namespace WebGPUApp {
     export type BufferPipelineType = {
         texturePipelineOpts?: MaterialOptsType,
         bindGroupLayoutOpts: GPUBindGroupLayoutEntry[],
-        renderPipelineOpts: Partial<GPURenderPipelineDescriptor>,
+        renderPipelineOpts: {
+            shader: string,
+            vertexBufferLayout: GPUVertexBufferLayoutDescriptor[]
+        },
         device: GPUDevice, 
         cameraBuffer: GPUBuffer,
         bufferSize: number,
-        bufferCb: (buffer: GPUBuffer) => MaterialBufferType
+        bufferCb: (device: GPUDevice, buffer: GPUBuffer) => MaterialBufferType
     }
     
     

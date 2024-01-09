@@ -1,13 +1,13 @@
 'use client'
 
-import { useState } from "react";
+import { useRef } from "react";
 import useRender from "@/lib/hooks/useRender";
+import example from "@/lib/example";
 
 function Canvas() {
-    const [canvasRef, setCanvasRef] = useState<HTMLCanvasElement>()
-    useRender(canvasRef)
-
-    return <canvas ref={ref => ref && setCanvasRef(ref)} tabIndex={0} />
+    const canvasRef = useRef<HTMLCanvasElement>(null)
+    useRender(canvasRef, example as Partial<WebGPUApp.BufferPipelineType>[])
+    return <canvas ref={canvasRef} tabIndex={0} />
 }
 
 export default Canvas;
