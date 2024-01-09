@@ -5,7 +5,7 @@ declare module '*.wgsl' {
 }
 
 namespace WebGPUApp {
-    export type CreateModelType = (pos: vec3, i: number) => mat4
+    export type CreateModelType = (pos: vec3) => mat4
     export type MakeMaterialType = Promise<MaterialType & BindGroupType>
     export type MaterialType = { 
         texture: GPUTexture 
@@ -28,11 +28,14 @@ namespace WebGPUApp {
     export type BufferPipelineType = {
         texturePipelineOpts?: MaterialOptsType,
         bindGroupLayoutOpts: GPUBindGroupLayoutEntry[],
-        renderPipelineOpts: Partial<GPURenderPipelineDescriptor>,
+        renderPipelineOpts: {
+            shader: string,
+            vertexBufferLayout: GPUVertexBufferLayoutDescriptor[]
+        },
         device: GPUDevice, 
         cameraBuffer: GPUBuffer,
         bufferSize: number,
-        bufferCb: (buffer: GPUBuffer) => MaterialBufferType
+        bufferCb: (device: GPUDevice, buffer: GPUBuffer) => MaterialBufferType
     }
     
     

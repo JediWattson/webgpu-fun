@@ -1,4 +1,4 @@
-import { vec3 } from "gl-matrix";
+import { Vec3 } from "wgpu-matrix";
 
 const makeBuffer = (verticesCoords: number[], verts: number) => 
     (device: GPUDevice, objBuffer: GPUBuffer, offset: number = 0): WebGPUApp.MaterialBufferType => {
@@ -14,14 +14,14 @@ const makeBuffer = (verticesCoords: number[], verts: number) =>
     new Float32Array(buffer.getMappedRange()).set(vertices);
     buffer.unmap();
 
-    const objects: vec3[] = [];   
-    function makeObjects(objs: vec3[]) {
+    const objects: Vec3[] = [];   
+    function makeObjects(objs: Vec3[]) {
         objects.push(...objs);
     }
 
     function update(createModel: WebGPUApp.CreateModelType) {
         objects.forEach((pos, i) => {                                         
-            const model = createModel(pos, i);
+            const model = createModel(pos);
             device.queue.writeBuffer(objBuffer, (offset + i)*64, <ArrayBuffer>model);
         })
     }

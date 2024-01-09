@@ -1,3 +1,4 @@
+import { makeRenderPipelineOpts } from "./config";
 import makeTexture from "./texture";
 import { makeBindGroup } from "./utils";
 
@@ -15,18 +16,23 @@ export async function makePipeline({
         usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
     })    
 
-    const material = bufferCb(buffer)
+    const material = bufferCb(device, buffer)
     const bindings = [makeBindGroup(device, [cameraBuffer, buffer], bindGroupLayoutOpts)];
     if (texturePipelineOpts) {
         const material = await makeTexture(device, texturePipelineOpts)
         bindings.push(material)
     }
 
-    renderPipelineOpts.layout = device.createPipelineLayout({ 
+    const { shader, vertexBufferLayout } = renderPipelineOpts;
+    const renderOpts = makeRenderPipelineOpts(
+        device.createShaderModule({ code: shader }), 
+        vertexBufferLayout
+    )
+    renderOpts.layout = device.createPipelineLayout({ 
         bindGroupLayouts: bindings.map(b => b.bindGroupLayout)
     });
 
-    const pipeline = device.createRenderPipeline(renderPipelineOpts as GPURenderPipelineDescriptor)
+    const pipeline = device.createRenderPipeline(renderOpts as GPURenderPipelineDescriptor)
 
     return {
         pipeline,

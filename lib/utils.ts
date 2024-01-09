@@ -1,4 +1,4 @@
-import { mat4 } from "gl-matrix";
+import { mat4 } from "wgpu-matrix";
 
 export const makeEvents = (canvas: HTMLCanvasElement, camera: WebGPUApp.CameraType): WebGPUApp.MakeEventsType => [
     { event: 'keydown', cb: e => camera.move((e as KeyboardEvent).key) },
@@ -23,11 +23,7 @@ export function makeBindGroup(
 }
 
 export function updateFloor(floorTexture: WebGPUApp.MaterialBufferType) {
-    floorTexture.update((pos, i) => {                    
-        const model = mat4.create();
-        mat4.translate(model, model, pos);        
-        return model;
-    })
+    floorTexture.update(pos => mat4.translation(pos))
 }
 
 let t = 0.0
@@ -37,10 +33,9 @@ export function updateTriangles(triangleMesh: WebGPUApp.MaterialBufferType) {
         t -= 2.0 * Math.PI;
     }
 
-    triangleMesh.update((o, i) => {
+    triangleMesh.update(pos => {
         const model = mat4.create();
-        mat4.translate(model, model, o);
-        mat4.rotateZ(model, model, t);
-        return model;
+        mat4.translation(pos, model);        
+        return mat4.rotateZ(model, t);
     });
 }
