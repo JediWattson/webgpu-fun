@@ -1,3 +1,4 @@
+
 declare module '*.wgsl' {
     const shader: string;
     export default shader;
@@ -10,10 +11,26 @@ namespace WebGPUApp {
         texture: GPUTexture 
     }
 
+    export type RunPipelineOptsType = {
+        depthStencil: { view: GPUTextureViewDescriptor, texture: GPUTextureDescriptor },
+        depthStencilAttachment: Partial<GPURenderPassDepthStencilAttachment>,
+        colorAttachments: Partial<GPURenderPassColorAttachment>[]
+    }    
+    
+    export type MaterialOptsType = { 
+        materialUrl: string,
+        textureDescriptor: Partial<GPUTextureDescriptor>, 
+        viewDescriptor: GPUTextureViewDescriptor, 
+        samplerDescriptor: GPUSamplerDescriptor, 
+        bindGroupLayoutDescriptor: GPUBindGroupLayoutDescriptor 
+    }
+
     export type BufferPipelineType = {
+        texturePipelineOpts?: MaterialOptsType,
+        bindGroupLayoutOpts: GPUBindGroupLayoutEntry[],
+        renderPipelineOpts: Partial<GPURenderPipelineDescriptor>,
         device: GPUDevice, 
         cameraBuffer: GPUBuffer,
-        texturePath?: string,
         bufferSize: number,
         bufferCb: (buffer: GPUBuffer) => MaterialBufferType
     }
@@ -29,7 +46,7 @@ namespace WebGPUApp {
         verts: number,
         buffer: GPUBuffer,
         update: (createModel: CreateModelType) => void, 
-        makeObjects: (count: number, isFloor?: boolean) => void,
+        makeObjects: (objs: vec3[]) => void,
         updateMaterial?: (mesh: MaterialBufferType) => void,
         getCount: () => number 
     }
@@ -40,7 +57,7 @@ namespace WebGPUApp {
     }
 
     export type PipelineType = { 
-        materials: MaterialBufferType[], 
+        material: MaterialBufferType, 
         pipeline: GPURenderPipeline, 
         bindGroups: GPUBindGroup[] 
     }

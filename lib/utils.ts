@@ -11,58 +11,19 @@ export const makeEvents = (canvas: HTMLCanvasElement, camera: WebGPUApp.CameraTy
     }}
 ]
 
-export function makeDepthStencil(device: GPUDevice): GPURenderPassDepthStencilAttachment {
-    const depthStencilBuffer = device.createTexture({
-        size: {
-            width: 300,
-            height: 150,
-            depthOrArrayLayers: 1
-        },
-        format: "depth32float",
-        usage: GPUTextureUsage.RENDER_ATTACHMENT,
-    });
-    const depthStencilView = depthStencilBuffer.createView({ format: "depth32float" });
-    
-    return {
-        view: depthStencilView,
-        depthClearValue: 1.0,
-        depthLoadOp: "clear",
-        depthStoreOp: "store",
-    };
-}
-
-export function makeBindGroup(device: GPUDevice, buffers: GPUBuffer[]): WebGPUApp.BindGroupType {
-    const bindGroupLayoutEntries: GPUBindGroupLayoutEntry[] = [
-        {
-            // perspective
-            binding: 0,
-            visibility: GPUShaderStage.VERTEX,
-            buffer: { type: 'uniform' }
-        },
-        {
-            // object position
-            binding: 1,
-            visibility: GPUShaderStage.VERTEX,
-            buffer: { type: "read-only-storage", hasDynamicOffset: false }
-        }
-    ]
-
-    const bindGroupEntries: GPUBindGroupEntry[] = buffers.map(
-        (buffer, i) => ({ binding:  i, resource: { buffer }})
-    ) 
-
-    const bindGroupLayout = device.createBindGroupLayout({ entries: bindGroupLayoutEntries })
-
-    const bindGroup = device.createBindGroup({
-        layout: bindGroupLayout,
-        entries: bindGroupEntries
-    })
-
-    return { bindGroup, bindGroupLayout }
+export function makeBindGroup(
+    device: GPUDevice, 
+    buffers: GPUBuffer[], 
+    bindGroupLayoutOpts: GPUBindGroupLayoutEntry[]
+): WebGPUApp.BindGroupType {
+    const entries = buffers.map((buffer, i) => ({ binding:  i, resource: { buffer }})) 
+    const layout = device.createBindGroupLayout({ entries: bindGroupLayoutOpts })
+    const bindGroup = device.createBindGroup({ layout, entries })
+    return { bindGroup, bindGroupLayout: layout }
 }
 
 export function updateFloor(floorTexture: WebGPUApp.MaterialBufferType) {
-    floorTexture.update((pos, i) => {            
+    floorTexture.update((pos, i) => {                    
         const model = mat4.create();
         mat4.translate(model, model, pos);        
         return model;

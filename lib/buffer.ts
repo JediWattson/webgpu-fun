@@ -15,22 +15,12 @@ const makeBuffer = (verticesCoords: number[], verts: number) =>
     buffer.unmap();
 
     const objects: vec3[] = [];   
-    function makeObjects(count: number = 1, isFloor?: boolean) {
-        if (isFloor) {                                
-            for (var x: number = -count; x <= count; x++) {
-                for (var y: number = -count; y <= count; y++) {
-                    objects.push([x, y, -1]);                    
-                }
-            }                
-        } else {
-            for(let i = 0; i < count; i++) {
-                objects.push([2, i, -0.5]);
-            }    
-        }
+    function makeObjects(objs: vec3[]) {
+        objects.push(...objs);
     }
 
     function update(createModel: WebGPUApp.CreateModelType) {
-        objects.forEach((pos, i) => {                                
+        objects.forEach((pos, i) => {                                         
             const model = createModel(pos, i);
             device.queue.writeBuffer(objBuffer, (offset + i)*64, <ArrayBuffer>model);
         })
@@ -39,9 +29,7 @@ const makeBuffer = (verticesCoords: number[], verts: number) =>
     return {
         verts,
         buffer,
-        getCount() {
-            return objects.length;
-        },
+        getCount: () => objects.length,
         makeObjects,
         update
     }

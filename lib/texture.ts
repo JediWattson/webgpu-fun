@@ -1,46 +1,40 @@
-import textureShader from './shaders/texture.wgsl';
 
-import { makeBindGroup } from "./utils";
-import makeMaterial from "./material";
-import { makePipeline } from "./pipline";
+export default async function makeTexture(device: GPUDevice, opts: WebGPUApp.MaterialOptsType): WebGPUApp.MakeMaterialType {
+    const { textureDescriptor, viewDescriptor, samplerDescriptor, bindGroupLayoutDescriptor, materialUrl } = opts
+    const response: Response = await fetch(materialUrl);
+    const blob: Blob = await response.blob();
+    const imageData: ImageBitmap = await createImageBitmap(blob);
 
-const textureBufferLayout: GPUVertexBufferLayout = {
-    arrayStride: 20,
-    attributes: [
-        {
-            shaderLocation: 0,
-            format: `float32x3`,
-            offset: 0
+    textureDescriptor.size = {
+        width: imageData.width,
+        height: imageData.height
+    }
+    const texture = device.createTexture(textureDescriptor as GPUTextureDescriptor);;
+
+    device.queue.copyExternalImageToTexture(
+        { source: imageData },
+        { texture: texture },
+        textureDescriptor.size
+    );
+
+    const sampler = device.createSampler(samplerDescriptor);    
+    const bindGroupLayout = device.createBindGroupLayout(bindGroupLayoutDescriptor)
+
+    const bindGroup = device.createBindGroup({
+        layout: bindGroupLayout,
+        entries: [{
+            binding: 0,
+            resource: texture.createView(viewDescriptor)
         },
         {
-            shaderLocation: 1,
-            format: `float32x2`,
-            offset: 12
-        }
-    ]
-}
+            binding: 1,
+            resource: sampler
+        }]
+    })
 
-export async function makeTexturePipeline({
-    device, 
-    cameraBuffer,
-    texturePath = '',
-    bufferSize,
-    bufferCb
-}: WebGPUApp.BufferPipelineType) {
-    const textureBuffer = device.createBuffer({
-        size: bufferSize,
-        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
-    })    
-
-    const materialBuffer = bufferCb(textureBuffer)
-    const textureMaterial = await makeMaterial(device, texturePath)
-    const textureBindGroup = makeBindGroup(device, [cameraBuffer, textureBuffer]);
-
-    return makePipeline(
-        device, 
-        textureShader, 
-        textureBufferLayout,
-        [textureBindGroup, textureMaterial], 
-        [materialBuffer]
-    );
+    return {
+        texture,
+        bindGroup,
+        bindGroupLayout
+    }
 }

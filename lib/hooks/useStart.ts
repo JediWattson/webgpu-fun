@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState } from "react";
+import { vec3 } from "gl-matrix";
 
 import initCamera from "../camera";
-import { runPipeline } from "../pipline";
-import { makeMeshPipeline } from "../mesh";
-import { makeTexturePipeline } from "../texture";
+import { makePipeline, runPipeline } from "../pipline";
+import { makeRenderPipelineOpts, runPipelineOpts, bindGroupLayoutOpts, texturePipelineOpts } from "../config";
+
+import textureShader from "../shaders/texture.wgsl";
+import meshShader from "../shaders/mesh.wgsl";
 
 import { makeQuad, makeTriangle } from "../buffer";
 import { updateFloor, updateTriangles } from "../utils";
-
 const floorCount = 40
 const triangleCount = 40;
 
@@ -30,40 +32,80 @@ export function useStart(context: GPUCanvasContext){
         const { uniBuffer: cameraBuffer, camera: initCam } = initCamera(device)
         setCamera(initCam)
         
-        const meshOpts = { 
-            device, 
-            cameraBuffer, 
-            bufferSize: 64 * floorCount, 
-            updateMaterial: updateTriangles,
-            bufferCb: (buffer: GPUBuffer) => {
-                const triangleMesh = makeTriangle(device, buffer);
-                triangleMesh.makeObjects(triangleCount);
-                triangleMesh.updateMaterial = updateTriangles;
-                return triangleMesh
-            } 
-        }
-
         const textureOpts = { 
             device, 
-            cameraBuffer, 
-            texturePath: 'floor.jpeg', 
+            cameraBuffer,  
+            texturePipelineOpts,
+            bindGroupLayoutOpts,
             bufferSize: 64 * (1 + (floorCount*2))**2,
-            updateMaterial: updateFloor,
+            shader: textureShader,
+            renderPipelineOpts: makeRenderPipelineOpts(
+                device.createShaderModule({ code: textureShader }), 
+                [{
+                    arrayStride: 20,
+                    attributes: [
+                        {
+                            shaderLocation: 0,
+                            format: `float32x3`,
+                            offset: 0
+                        },
+                        {
+                            shaderLocation: 1,
+                            format: `float32x2`,
+                            offset: 12
+                        }
+                    ]
+                }]
+            ),
             bufferCb: (buffer: GPUBuffer) => {
                 const floorMesh = makeQuad(device, buffer);
-                floorMesh.makeObjects(floorCount, true);
+                const objects: vec3[] = Array(floorCount**2).fill(0).map((_, i) => [i%floorCount, Math.floor(i/floorCount), -1]);
+                floorMesh.makeObjects(objects);
                 updateFloor(floorMesh);  
                 return floorMesh      
             } 
         }
 
-        const texturePipeline = await makeTexturePipeline(textureOpts);
-        const meshPipeline = makeMeshPipeline(meshOpts);
+        const meshOpts = { 
+            device, 
+            cameraBuffer,
+            bindGroupLayoutOpts,
+            bufferSize: 64 * floorCount,
+            renderPipelineOpts: makeRenderPipelineOpts(
+                device.createShaderModule({ code: meshShader }), 
+                [{
+                    arrayStride: 24,
+                    attributes: [
+                        {
+                            shaderLocation: 0,
+                            format: `float32x3`,
+                            offset: 0
+                        },
+                        {
+                            shaderLocation: 1,
+                            format: `float32x3`,
+                            offset: 12
+                        }
+                    ]
+                }]
+            ), 
+            bufferCb: (buffer: GPUBuffer) => {
+                const triangleMesh = makeTriangle(device, buffer);
+                const objects: vec3[] = Array(triangleCount).fill(0).map((_, i) => [2, i, -0.5]);
+                triangleMesh.makeObjects(objects);
+                triangleMesh.updateMaterial = updateTriangles;
+                return triangleMesh
+            } 
+        }
+
+        const texturePipeline = await makePipeline(textureOpts as WebGPUApp.BufferPipelineType);
+        const meshPipeline = await makePipeline(meshOpts as WebGPUApp.BufferPipelineType);
 
         cleanupRef.current = runPipeline(
             device, 
             context, 
-            [meshPipeline, texturePipeline]
+            [meshPipeline, texturePipeline],
+            runPipelineOpts
         );
     }
     

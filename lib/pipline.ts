@@ -1,89 +1,72 @@
-import { makeDepthStencil, updateTriangles } from "./utils";
+import makeTexture from "./texture";
+import { makeBindGroup } from "./utils";
 
-export function makePipeline(
-    device: GPUDevice, 
-    shader: string, 
-    bufferLayout: GPUVertexBufferLayout,
-    bindGroups: WebGPUApp.BindGroupType[], 
-    materials: WebGPUApp.MaterialBufferType[]
-) {    
-    const pipelineLayout = device.createPipelineLayout({ 
-        bindGroupLayouts: bindGroups.map(b => b.bindGroupLayout)
+export async function makePipeline({
+    device, 
+    cameraBuffer,
+    bufferSize,
+    bufferCb,
+    bindGroupLayoutOpts,
+    renderPipelineOpts,
+    texturePipelineOpts
+}: WebGPUApp.BufferPipelineType): Promise<WebGPUApp.PipelineType> {    
+    const buffer = device.createBuffer({
+        size: bufferSize,
+        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
+    })    
+
+    const material = bufferCb(buffer)
+    const bindings = [makeBindGroup(device, [cameraBuffer, buffer], bindGroupLayoutOpts)];
+    if (texturePipelineOpts) {
+        const material = await makeTexture(device, texturePipelineOpts)
+        bindings.push(material)
+    }
+
+    renderPipelineOpts.layout = device.createPipelineLayout({ 
+        bindGroupLayouts: bindings.map(b => b.bindGroupLayout)
     });
 
-    const pipeline = device.createRenderPipeline({
-        layout: pipelineLayout,
-        depthStencil: {
-            format: "depth32float",
-            depthWriteEnabled: true,
-            depthCompare: "less-equal"
-        },
-        vertex: {
-            entryPoint: "vs_main",
-            module: device.createShaderModule({
-                code: shader
-            }),
-            buffers: [bufferLayout]
-        },
-        fragment: {
-            entryPoint: "fs_main",
-            module: device.createShaderModule({
-                code: shader
-            }),
-            targets: [{ format: "bgra8unorm" }]
-        },
-        primitive : {
-            topology : "triangle-list"
-        },
-    })
+    const pipeline = device.createRenderPipeline(renderPipelineOpts as GPURenderPipelineDescriptor)
 
     return {
         pipeline,
-        bindGroups: bindGroups.map(b => b.bindGroup),
-        materials
+        material,
+        bindGroups: bindings.map(b => b.bindGroup)
     }
 }
 
 export function runPipeline(
     device: GPUDevice, 
     context: GPUCanvasContext,
-    pipelines: WebGPUApp.PipelineType[]
+    pipelines: WebGPUApp.PipelineType[],
+    opts: WebGPUApp.RunPipelineOptsType
 ): () => void {
-    const depthStencilAttachment = makeDepthStencil(device);
+    const { colorAttachments, depthStencilAttachment, depthStencil } = opts;
+    depthStencilAttachment.view = device.createTexture(depthStencil.texture).createView(depthStencil.view)
     
     let frameId: number;
-    function frame() {
+    function frame() {        
         const commandEncoder = device.createCommandEncoder();
-        const textureView = context.getCurrentTexture().createView();
+        const view = context.getCurrentTexture().createView();
+        colorAttachments.forEach(attachment => { attachment.view = view; })
 
         const renderPassDescriptor: GPURenderPassDescriptor = {
-            depthStencilAttachment,
-            colorAttachments: [
-                {
-                    view: textureView,
-                    clearValue: { r: 0.0, g: 0.0, b: 0.0, a: 1.0 },
-                    loadOp: 'clear',
-                    storeOp: 'store',
-                },
-            ],
+            depthStencilAttachment: depthStencilAttachment as GPURenderPassDepthStencilAttachment,
+            colorAttachments: colorAttachments as GPURenderPassColorAttachment[],
         };
         
         const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
-        pipelines.forEach(({ bindGroups, pipeline, materials }) => {
+        pipelines.forEach(({ bindGroups, pipeline, material }) => {
             passEncoder.setPipeline(pipeline);
             bindGroups.forEach((bindGroup, i) => {
                 passEncoder.setBindGroup(i, bindGroup);    
             })
-            let objectCount = 0
-            materials.forEach((material, i) => {
-                if (material.updateMaterial) material.updateMaterial(material);
-                passEncoder.setVertexBuffer(0, material.buffer);            
-                const currentCount = material.getCount();                
-                passEncoder.draw(material.verts, currentCount, 0, objectCount);    
-                objectCount += currentCount
-            })
+            if (material.updateMaterial) material.updateMaterial(material);
+            passEncoder.setVertexBuffer(0, material.buffer);            
+            const currentCount = material.getCount();                
+            passEncoder.draw(material.verts, currentCount, 0, 0);
         })
-
+    
         passEncoder.end();
         device.queue.submit([commandEncoder.finish()]);
         frameId = requestAnimationFrame(frame);
