@@ -9,11 +9,12 @@
 /coverage
 
 # next.js
-/.next/
-/out/
+/example/.next/
+/example/out/
+/example/node_modules
 
 # production
-/build
+/dist
 
 # misc
 .DS_Store
@@ -32,4 +33,4 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
-next-env.d.ts
+/example/next-env.d.ts

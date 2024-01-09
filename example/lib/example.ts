@@ -1,19 +1,20 @@
-import { bindGroupLayoutOpts, texturePipelineOpts } from "./config";
-import { Vec3, vec3 } from "wgpu-matrix";
+import { vec3 } from "wgpu-matrix";
+
 import textureShader from "./shaders/texture.wgsl";
 import meshShader from "./shaders/mesh.wgsl";
 
-import { makeQuad, makeTriangle } from "./buffer";
+import { makeTriangle, makeQuad } from "./assets";
 import { updateFloor, updateTriangles } from "./utils";
 
 const floorCount = 40
 const triangleCount = 40;
 
-export default [
+const exampleOpts = [
     { 
-        texturePipelineOpts,
-        bindGroupLayoutOpts,
         bufferSize: 64 * (1 + (floorCount*2))**2,
+        texturePipelineOpts: {
+            materialUrl: 'floor.jpeg',
+        },
         renderPipelineOpts: {
             shader: textureShader,
             vertexBufferLayout: [{
@@ -42,7 +43,6 @@ export default [
             return floorMesh      
         } 
     }, { 
-        bindGroupLayoutOpts,
         bufferSize: 64 * floorCount,
         renderPipelineOpts: {
             shader: meshShader,
@@ -71,3 +71,5 @@ export default [
         } 
     }
 ]
+
+export default exampleOpts;

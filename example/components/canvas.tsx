@@ -1,12 +1,12 @@
 'use client'
 
 import { useRef } from "react";
-import useRender from "@/lib/hooks/useRender";
-import example from "@/lib/example";
+import { useRender } from "webgpu-fun";
+import example from "../lib/example";
 
 function Canvas() {
     const canvasRef = useRef<HTMLCanvasElement>(null)
-    useRender(canvasRef, example as Partial<WebGPUApp.BufferPipelineType>[])
+    useRender(canvasRef, example as Partial<WebGPUFun.BufferPipelineType>[])
     return <canvas ref={canvasRef} tabIndex={0} />
 }
 

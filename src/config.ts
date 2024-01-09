@@ -1,5 +1,4 @@
 export const texturePipelineOpts = {
-    materialUrl: 'floor.jpeg',
     viewDescriptor: {
         format: "bgra8unorm",
         dimension: "2d",
@@ -37,6 +36,11 @@ export const texturePipelineOpts = {
     }
 }
 
+export const makeTextureOpts = ({ materialUrl }: { materialUrl: string }) => ({
+    ...texturePipelineOpts,
+    materialUrl
+}) as WebGPUFun.TextureOptsType
+
 export const bindGroupLayoutOpts: GPUBindGroupLayoutEntry[] = [
     {
         // perspective
@@ -52,7 +56,7 @@ export const bindGroupLayoutOpts: GPUBindGroupLayoutEntry[] = [
     }
 ]
 
-export const runPipelineOpts: WebGPUApp.RunPipelineOptsType = {
+export const runPipelineOpts: WebGPUFun.RunPipelineOptsType = {
     depthStencil: {
         view: { format: "depth32float" as GPUTextureFormat },
         texture: {
@@ -78,7 +82,6 @@ export const runPipelineOpts: WebGPUApp.RunPipelineOptsType = {
         },
     ]
 }
-
 
 export const renderPipelineOpts = {
     depthStencil: {
