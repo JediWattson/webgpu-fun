@@ -1,6 +1,7 @@
 import initCamera from "./camera";
 import { makePipeline, runPipeline } from "./pipline";
 import { bindGroupLayoutOpts, runPipelineOpts, makeTextureOpts } from "./config";
+import type { WebGPUFun } from "./types";
 
 export default async function loadAssets(contextRef: GPUCanvasContext, assets: Partial<WebGPUFun.BufferPipelineType>[]){
     const adapter = await navigator.gpu?.requestAdapter();

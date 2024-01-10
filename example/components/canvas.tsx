@@ -6,7 +6,7 @@ import example from "../lib/example";
 
 function Canvas() {
     const canvasRef = useRef<HTMLCanvasElement>(null)
-    useRender(canvasRef, example as Partial<WebGPUFun.BufferPipelineType>[])
+    useRender(canvasRef, example)
     return <canvas ref={canvasRef} tabIndex={0} />
 }
 

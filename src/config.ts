@@ -1,3 +1,5 @@
+import { WebGPUFun } from "./types"
+
 export const texturePipelineOpts = {
     viewDescriptor: {
         format: "bgra8unorm",

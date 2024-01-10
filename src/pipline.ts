@@ -1,5 +1,6 @@
 import { makeRenderPipelineOpts } from "./config";
 import makeTexture from "./texture";
+import type { WebGPUFun } from "./types";
 import { makeBindGroup } from "./utils";
 
 export async function makePipeline({

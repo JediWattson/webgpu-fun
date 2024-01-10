@@ -1,5 +1,6 @@
 import { Vec3, mat4, vec3 } from "wgpu-matrix";
 import { deg2Rad } from "./utils";
+import type { WebGPUFun } from "./types";
 
 const MOVEMENT_SCALE = 5;
 const FULL_CIRCLE = 360;

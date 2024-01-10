@@ -1,4 +1,5 @@
 import type { Vec3 } from "wgpu-matrix";
+import type { WebGPUFun } from "./types";
 
 const makeAssetBuffer = (verticesCoords: number[], verts: number) => 
     (device: GPUDevice, objBuffer: GPUBuffer, offset: number = 0): WebGPUFun.AssetBufferType => {

@@ -1,19 +1,22 @@
 {
   "name": "webgpu-fun",
-  "version": "0.1.0",
+  "version": "0.1.7",
   "scripts": {
     "build": "tsc"
   },
   "files": ["dist"],
   "main": "dist/index.js",
-  "types": "src/index.d.ts",
   "dependencies": {
     "react": "^18.2.0",
     "wgpu-matrix": "^2.5.1"
   },
+  "peerDependencies": {
+    "react": "^18.2.0",
+    "@webgpu/types": "^0.1.40"    
+  },
   "devDependencies": {
-    "@types/react": "^18.2.47",
     "@webgpu/types": "^0.1.40",
+    "@types/react": "^18.2.47",
     "tsc": "^2.0.4",
     "typescript": "^5.3.3"
   }

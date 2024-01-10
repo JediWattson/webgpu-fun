@@ -1,3 +1,5 @@
+import type { WebGPUFun } from "./types";
+
 export default async function makeTexture(
     device: GPUDevice, 
     opts: WebGPUFun.TextureOptsType

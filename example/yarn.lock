@@ -1760,7 +1760,7 @@ react-is@^16.13.1:
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-16.13.1.tgz#789729a4dc36de2999dc156dd6c1d9c18cea56a4"
   integrity sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==
 
-react@18.2.0:
+react@18.2.0, react@^18.2.0:
   version "18.2.0"
   resolved "https://registry.yarnpkg.com/react/-/react-18.2.0.tgz#555bd98592883255fa00de14f1151a917b5d77d5"
   integrity sha512-/3IjMdb2L9QbBdWiW5e3P2/npwMBaU9mHCSCUzNln0ZCYbcfTsGbTJrU/kGemdH2IWmB2ioZ+zkxtmq6g09fGQ==
@@ -2145,8 +2145,18 @@ watchpack@2.4.0:
     glob-to-regexp "^0.4.1"
     graceful-fs "^4.1.2"
 
-"webgpu-fun@file:../dist":
-  version "0.0.0"
+webgpu-fun@^0.1.7:
+  version "0.1.7"
+  resolved "https://registry.yarnpkg.com/webgpu-fun/-/webgpu-fun-0.1.7.tgz#350281300c47096f75a1f3da4d34e19e175de429"
+  integrity sha512-s5/MdmjM4nCN4o1Om5+Dp267xsaj1wZ34mFvLMtsxH4oljhJlvSOJAfMT44QDzFuehWZw667dqaywVAA+xWsUA==
+  dependencies:
+    react "^18.2.0"
+    wgpu-matrix "^2.5.1"
+
+wgpu-matrix@^2.5.1:
+  version "2.5.1"
+  resolved "https://registry.yarnpkg.com/wgpu-matrix/-/wgpu-matrix-2.5.1.tgz#f0a173ca096f4c6e3f7fdc9fd4542d009546d924"
+  integrity sha512-fEKK2Hm3JW0KEko2CdrKEg4d81KBKU8UXGhX0kb//3s0A1MrXFG37jzCbvuRdx0XtBs0923oFvSjevwNI5G4Eg==
 
 which-boxed-primitive@^1.0.2:
   version "1.0.2"

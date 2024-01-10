@@ -12,7 +12,7 @@
         "next": "^14.0.4",
         "react": "18.2.0",
         "react-dom": "18.2.0",
-        "webgpu-fun": "file:../dist"
+        "webgpu-fun": "^0.1.7"
     },
     "devDependencies": {
         "@types/node": "20.1.2",
