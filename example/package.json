@@ -12,14 +12,12 @@
         "next": "^14.0.4",
         "react": "18.2.0",
         "react-dom": "18.2.0",
-        "webgpu-fun": "^0.1.7"
+        "webgpu-fun": "^0.2.18"
     },
     "devDependencies": {
         "@types/node": "20.1.2",
         "@types/react": "18.2.6",
         "@types/react-dom": "18.2.4",
-        "@types/webgpu-fun": "file:../dist",
-        "@webgpu/types": "^0.1.40",
         "eslint": "8.40.0",
         "eslint-config-next": "13.4.1",
         "raw-loader": "^4.0.2",

@@ -1,13 +1,13 @@
 {
   "compilerOptions": {
+    "target": "es6",
     "module": "esnext",
     "outDir": "./dist",
     "moduleResolution": "node",
     "declaration": true,
-    "esModuleInterop": true,
     "strict": true,
     "jsx": "react",
-    "lib": ["dom", "esnext"],
+    "lib": ["dom", "dom.iterable", "esnext"],
     "types": ["@webgpu/types", "wgpu-matrix"]
   },
   "include": ["src/**/*"],

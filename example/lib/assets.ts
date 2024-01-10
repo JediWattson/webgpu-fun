@@ -1,14 +1,14 @@
-import { makeAssetBuffer } from 'webgpu-fun'
+'use client';
 
 // each point contains 3 position values, 3 color values
-export const makeTriangle = makeAssetBuffer([
+const triangeVert = [
     0.0,  0.0,  0.5, 1.0, 0.0, 0.0,
     0.0, -0.5, -0.5, 0.0, 1.0, 0.0,
     0.0,  0.5, -0.5, 0.0, 0.0, 1.0
-], 3)
+]
 
 // each point contains 3 position values, 2 texture pos values
-export const makeQuad = makeAssetBuffer([
+const quadVert = [
     -0.5,  0.5, 0.0, 1.0, 0.0,
     -0.5, -0.5, 0.0, 1.0, 1.0,
      0.5, -0.5, 0.0, 0.0, 1.0,
@@ -16,4 +16,10 @@ export const makeQuad = makeAssetBuffer([
      0.5, -0.5, 0.0, 0.0, 1.0,
      0.5,  0.5, 0.0, 0.0, 0.0,
     -0.5,  0.5, 0.0, 1.0, 0.0,
-], 6)
+]
+
+import { makeAssetBuffer } from 'webgpu-fun'
+
+const makeTriangle = makeAssetBuffer(triangeVert, 3)
+const makeQuad = makeAssetBuffer(quadVert, 6)
+export { makeQuad, makeTriangle }

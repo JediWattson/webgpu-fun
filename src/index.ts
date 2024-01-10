@@ -1,2 +1,5 @@
-export { default as makeAssetBuffer} from "./assetBuffer";
-export { default as useRender } from "./hooks/useRender";
+import makeAssetBufferDef from "./assetBuffer";
+import useRenderDef from "./hooks/useRender";
+
+export const makeAssetBuffer = makeAssetBufferDef;
+export const useRender = useRenderDef;

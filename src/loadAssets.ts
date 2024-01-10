@@ -1,6 +1,6 @@
 import initCamera from "./camera";
 import { makePipeline, runPipeline } from "./pipline";
-import { bindGroupLayoutOpts, runPipelineOpts, makeTextureOpts } from "./config";
+import { makeBindGroupLayoutOpts, makeRunPipelineOpts, makeTextureOpts } from "./config";
 import type { WebGPUFun } from "./types";
 
 export default async function loadAssets(contextRef: GPUCanvasContext, assets: Partial<WebGPUFun.BufferPipelineType>[]){
@@ -13,6 +13,7 @@ export default async function loadAssets(contextRef: GPUCanvasContext, assets: P
 
     const { uniBuffer: cameraBuffer, camera } = initCamera(device)
     const pipelines: WebGPUFun.PipelineType[] = await Promise.all(assets.map((opts) => {
+        const bindGroupLayoutOpts = makeBindGroupLayoutOpts()
         const assetOpts = { ...opts, cameraBuffer, device, bindGroupLayoutOpts } as WebGPUFun.BufferPipelineType
         if (opts.texturePipelineOpts) {
             assetOpts.texturePipelineOpts = makeTextureOpts(opts.texturePipelineOpts)
@@ -20,11 +21,12 @@ export default async function loadAssets(contextRef: GPUCanvasContext, assets: P
         return makePipeline(assetOpts)
     }))
 
+    const renderOpts = makeRunPipelineOpts()
     const cleanup = runPipeline(
         device, 
         contextRef, 
         pipelines,
-        runPipelineOpts
+        renderOpts
     );
     
     return { camera, cleanup }
