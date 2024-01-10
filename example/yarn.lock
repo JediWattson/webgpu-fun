@@ -2137,10 +2137,10 @@ watchpack@2.4.0:
     glob-to-regexp "^0.4.1"
     graceful-fs "^4.1.2"
 
-webgpu-fun@^0.2.18:
-  version "0.2.18"
-  resolved "https://registry.yarnpkg.com/webgpu-fun/-/webgpu-fun-0.2.18.tgz#70aa940219393d62be46b424f15816ab25af4034"
-  integrity sha512-d+Xg5CiSP3IuvYDt4TrQYFoKWlfU4dI/SiEHxxgffRqI1WWxg25T3/LSv0KSqagFhqcrGCktjJ/MRJNXgotTJg==
+webgpu-fun@^0.2.19:
+  version "0.2.19"
+  resolved "https://registry.yarnpkg.com/webgpu-fun/-/webgpu-fun-0.2.19.tgz#28d466596189696d043059c3f81d356ba597b05f"
+  integrity sha512-vm/I4fGE6wJjkZPts1VE0/+ql6BzF79FeIp2RO+gkfu0CzB7P7fAlr/gAJHgOBw/OKKvt99Ruxj9uqk9xBL+Kg==
   dependencies:
     wgpu-matrix "^2.5.1"
 
