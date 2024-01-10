@@ -1,5 +1,6 @@
 import { makeRenderPipelineOpts } from "./config";
 import makeTexture from "./texture";
+import type { WebGPUFun } from "./types";
 import { makeBindGroup } from "./utils";
 
 export async function makePipeline({
@@ -10,7 +11,7 @@ export async function makePipeline({
     bindGroupLayoutOpts,
     renderPipelineOpts,
     texturePipelineOpts
-}: WebGPUApp.BufferPipelineType): Promise<WebGPUApp.PipelineType> {    
+}: WebGPUFun.BufferPipelineType): Promise<WebGPUFun.PipelineType> {    
     const buffer = device.createBuffer({
         size: bufferSize,
         usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
@@ -44,8 +45,8 @@ export async function makePipeline({
 export function runPipeline(
     device: GPUDevice, 
     context: GPUCanvasContext,
-    pipelines: WebGPUApp.PipelineType[],
-    opts: WebGPUApp.RunPipelineOptsType
+    pipelines: WebGPUFun.PipelineType[],
+    opts: WebGPUFun.RunPipelineOptsType
 ): () => void {
     const { colorAttachments, depthStencilAttachment, depthStencil } = opts;
     depthStencilAttachment.view = device.createTexture(depthStencil.texture).createView(depthStencil.view)

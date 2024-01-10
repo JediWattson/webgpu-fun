@@ -1,8 +1,9 @@
 import { useEffect, useRef } from "react";
 import { makeEvents } from "../utils";
 import loadAssets from "../loadAssets";
+import { WebGPUFun } from "../types";
 
-function useRender(canvasRef: { current: HTMLCanvasElement | null }, assets: Partial<WebGPUApp.BufferPipelineType>[]) { 
+function useRender(canvasRef: { current: HTMLCanvasElement | null }, assets: Partial<WebGPUFun.BufferPipelineType>[]) { 
     const cleanupRef = useRef<() => void>(() => {});   
     const handleLoad = async () => {
         if (canvasRef.current === null) return;

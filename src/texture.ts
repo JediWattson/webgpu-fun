@@ -1,5 +1,9 @@
+import type { WebGPUFun } from "./types";
 
-export default async function makeTexture(device: GPUDevice, opts: WebGPUApp.MaterialOptsType): WebGPUApp.MakeMaterialType {
+export default async function makeTexture(
+    device: GPUDevice, 
+    opts: WebGPUFun.TextureOptsType
+): Promise<WebGPUFun.MakeMaterialType> {
     const { textureDescriptor, viewDescriptor, samplerDescriptor, bindGroupLayoutDescriptor, materialUrl } = opts
     const response: Response = await fetch(materialUrl);
     const blob: Blob = await response.blob();

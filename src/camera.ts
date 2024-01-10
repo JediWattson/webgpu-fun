@@ -1,8 +1,6 @@
 import { Vec3, mat4, vec3 } from "wgpu-matrix";
-
-export function Deg2Rad(theta: number) : number {
-    return theta * Math.PI / 180;
-}
+import { deg2Rad } from "./utils";
+import type { WebGPUFun } from "./types";
 
 const MOVEMENT_SCALE = 5;
 const FULL_CIRCLE = 360;
@@ -28,9 +26,9 @@ export default function initCamera(device: GPUDevice) {
 
     function setMovement() {
         vec3.copy([
-            Math.cos(Deg2Rad(eulers[1])) * Math.cos(Deg2Rad(eulers[0])),
-            Math.sin(Deg2Rad(eulers[1])) * Math.cos(Deg2Rad(eulers[0])),
-            Math.sin(Deg2Rad(eulers[0]))
+            Math.cos(deg2Rad(eulers[1])) * Math.cos(deg2Rad(eulers[0])),
+            Math.sin(deg2Rad(eulers[1])) * Math.cos(deg2Rad(eulers[0])),
+            Math.sin(deg2Rad(eulers[0]))
         ], forwards)        
         vec3.cross(forwards, upVec, side);
         vec3.cross(side, forwards, up);
@@ -62,7 +60,7 @@ export default function initCamera(device: GPUDevice) {
         frameNumber = requestAnimationFrame(moveCamera);
     }
 
-    const camera: WebGPUApp.CameraType = {
+    const camera: WebGPUFun.CameraType = {
         move(key, isUpPress = false) {   
             if (!['w', 'a', 's', 'd'].includes(key)) return
 

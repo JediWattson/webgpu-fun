@@ -1,7 +1,8 @@
-import { Vec3 } from "wgpu-matrix";
+import type { Vec3 } from "wgpu-matrix";
+import type { WebGPUFun } from "./types";
 
-const makeBuffer = (verticesCoords: number[], verts: number) => 
-    (device: GPUDevice, objBuffer: GPUBuffer, offset: number = 0): WebGPUApp.MaterialBufferType => {
+const makeAssetBuffer = (verticesCoords: number[], verts: number) => 
+    (device: GPUDevice, objBuffer: GPUBuffer, offset: number = 0): WebGPUFun.AssetBufferType => {
 
     const vertices = new Float32Array(verticesCoords);
     const descriptor: GPUBufferDescriptor = {
@@ -19,7 +20,7 @@ const makeBuffer = (verticesCoords: number[], verts: number) =>
         objects.push(...objs);
     }
 
-    function update(createModel: WebGPUApp.CreateModelType) {
+    function update(createModel: WebGPUFun.CreateModelType) {
         objects.forEach((pos, i) => {                                         
             const model = createModel(pos);
             device.queue.writeBuffer(objBuffer, (offset + i)*64, <ArrayBuffer>model);
@@ -35,20 +36,4 @@ const makeBuffer = (verticesCoords: number[], verts: number) =>
     }
 };
 
-// each point contains 3 position values, 3 color values
-export const makeTriangle = makeBuffer([
-    0.0,  0.0,  0.5, 1.0, 0.0, 0.0,
-    0.0, -0.5, -0.5, 0.0, 1.0, 0.0,
-    0.0,  0.5, -0.5, 0.0, 0.0, 1.0
-], 3)
-
-// each point contains 3 position values, 2 texture pos values
-export const makeQuad = makeBuffer([
-    -0.5,  0.5, 0.0, 1.0, 0.0,
-    -0.5, -0.5, 0.0, 1.0, 1.0,
-     0.5, -0.5, 0.0, 0.0, 1.0,
-
-     0.5, -0.5, 0.0, 0.0, 1.0,
-     0.5,  0.5, 0.0, 0.0, 0.0,
-    -0.5,  0.5, 0.0, 1.0, 0.0,
-], 6)
+export default makeAssetBuffer;
