@@ -38,10 +38,12 @@ declare namespace WebGPUFun {
         bufferCb: (device: GPUDevice, buffer: GPUBuffer) => AssetBufferType;
     }
     
+    export type RotationalType = { y?: number, z?: number }
     interface CameraType {
+        setMovement: () => void;
         reset: () => void;
-        move: (key: string, isUpPress?: boolean) => void;
-        rotate: (e: MouseEvent) => void;
+        move: (diff: number, isStrafe?: boolean) => void;
+        rotate: ({ y, z }: RotationalType) => void;
     }
     
     interface AssetBufferType {
