@@ -1,7 +1,10 @@
 import { useEffect, useRef } from "react";
-import { makeEvents } from "../utils";
+
 import loadAssets from "../loadAssets";
+import makeKeyboardEvents from "../events/keyboard";
+import makeGamepadHandler from "../events/gamepad";
 import { WebGPUFun } from "../types";
+
 
 function useRender(canvasRef: { current: HTMLCanvasElement | null }, assets: Partial<WebGPUFun.BufferPipelineType>[]) { 
     const cleanupRef = useRef<() => void>(() => {});   
@@ -10,23 +13,16 @@ function useRender(canvasRef: { current: HTMLCanvasElement | null }, assets: Par
 
         const ref = canvasRef.current 
         const context = ref.getContext('webgpu') as GPUCanvasContext;
-        const obj = await loadAssets(context, assets);
-        if (!obj) return;
+        const scene = await loadAssets(context, assets);
+        if (!scene) return;
 
-        const { camera, cleanup } = obj;
-        const events = makeEvents(ref, camera);
-
-        events.forEach(
-            ({ event: ev, cb }) => ref.addEventListener(ev, cb)
-        )
-        
+        const { camera, cleanupScene } = scene;
+        const cleanupEvents = makeKeyboardEvents(ref, camera);
+        makeGamepadHandler(camera);
         cleanupRef.current = () => {
-            cleanup();
-            events.forEach(
-                ({ event: ev, cb }) => ref.removeEventListener(ev, cb)
-            )
+            cleanupScene();
+            cleanupEvents()
         };
-
     }
 
     useEffect(() => {

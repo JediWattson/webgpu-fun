@@ -22,12 +22,12 @@ export default async function loadAssets(contextRef: GPUCanvasContext, assets: P
     }))
 
     const renderOpts = makeRunPipelineOpts()
-    const cleanup = runPipeline(
+    const cleanupScene = runPipeline(
         device, 
         contextRef, 
         pipelines,
         renderOpts
     );
     
-    return { camera, cleanup }
+    return { camera, cleanupScene }
 }
